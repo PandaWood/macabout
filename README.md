@@ -1,8 +1,8 @@
 # macabout
 
-A Linux desktop app that displays an "About This Mac"-inspired dialog showing the current machine's hardware and OS information in clean, human-readable format.
+macOS has a clean, human-readable "About This Mac" dialog that displays your hardware at a glance — processor, memory, graphics, serial number. Linux exposes the same information but buries it in raw technical strings across multiple system tools.
 
-![macabout dialog](docs/screenshot.png)
+macabout presents your Linux machine's hardware in exactly the same format. If you're selling a laptop, donating a machine, or just want a clean system summary, macabout gives you the same at-a-glance view that Mac users take for granted.
 
 ## Running on Linux
 
