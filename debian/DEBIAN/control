@@ -5,7 +5,7 @@ Priority: optional
 Architecture: all
 Depends: python3, python3-tk, pciutils
 Recommends: dmidecode, lshw, python3-pil
-Maintainer: macabout maintainers <noreply@example.com>
+Maintainer: PandaWood <pandawoude@gmail.com>
 Description: About This Computer dialog, Apple-style
  A Linux desktop app that displays a styled "About This Mac"-inspired
  dialog showing distro, processor, memory, graphics, and serial number.
