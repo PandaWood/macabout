@@ -85,21 +85,3 @@ sudo apt install ./build/macabout_1.0.0_all.deb
 
 Requires `dpkg-deb` (standard on Debian/Ubuntu). The resulting package declares `python3-tk` and `pciutils` as dependencies, and recommends `dmidecode`, `lshw`, and `python3-pil`.
 
-## Project structure
-
-```
-macabout/
-├── macabout/
-│   ├── app.py                # entry point, argument parsing
-│   ├── hwinfo.py             # SystemInfo dataclass + platform dispatch
-│   ├── linux_collectors.py   # real hardware queries (Linux)
-│   ├── mac_collectors.py     # real hardware queries (macOS, for development)
-│   ├── mock_data.py          # static sample data for cross-platform dev
-│   ├── formatters.py         # raw strings → clean marketing names
-│   ├── ui.py                 # tkinter dialog
-│   └── data/
-│       ├── gpu_lookup.json   # PCI ID → {name, vram_mb}
-│       └── icons/            # optional bundled distro PNGs
-├── debian/                   # dpkg-deb package template
-└── build.sh                  # builds macabout_x.x.x_all.deb
-```
