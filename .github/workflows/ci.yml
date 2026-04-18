@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Validate Python syntax
+        run: |
+          python3 -c "
+          import ast, pathlib, sys
+          errors = []
+          for p in pathlib.Path('macabout').rglob('*.py'):
+              try:
+                  ast.parse(p.read_text())
+              except SyntaxError as e:
+                  errors.append(f'{p}: {e}')
+          if errors:
+              print('\n'.join(errors)); sys.exit(1)
+          print(f'All .py files OK')
+          "
+
+      - name: Validate GPU lookup JSON
+        run: |
+          python3 -c "
+          import json, sys
+          data = json.loads(open('macabout/data/gpu_lookup.json').read())
+          print(f'gpu_lookup.json OK ({len(data)} entries)')
+          "
+
+      - name: Validate hardware collection and formatting
+        run: |
+          python3 -c "
+          from macabout import hwinfo, formatters
+          info = hwinfo.collect_system_info(force_mock=True)
+          d = formatters.format_all(info)
+          for k, v in d.items():
+              print(f'  {k}: {v}')
+          "

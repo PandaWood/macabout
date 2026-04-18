@@ -1,0 +1,2 @@
+# Allow macabout to read hardware info via dmidecode without a password prompt
+ALL ALL=(root) NOPASSWD: /usr/sbin/dmidecode
