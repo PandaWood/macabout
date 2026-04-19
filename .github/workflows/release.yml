@@ -44,8 +44,8 @@ jobs:
             ## Install
 
             ```bash
-            sudo apt install ./macabout_${{ github.ref_name }}_all.deb
+            sudo apt install ./macabout_*.deb
             ```
 
-            **Requires:** `python3-tk`, `pciutils`
-            **Recommends:** `dmidecode` (memory speed/type + serial number), `python3-pil` (icon resizing)
+            **Requires:** `python3-tk`, `pciutils`, `dmidecode`
+            **Recommends:** `python3-pil` (icon resizing)

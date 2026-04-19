@@ -18,7 +18,7 @@ sudo apt install ./macabout_1.0.0_all.deb
 macabout
 ```
 
-`apt` automatically installs all dependencies (`python3-tk`, `pciutils`) before macabout runs.
+`apt` automatically installs all dependencies (`python3-tk`, `pciutils`, `dmidecode`) before macabout runs.
 
 ## Running from source (developers)
 
@@ -28,7 +28,7 @@ cd macabout
 sudo apt install python3-tk python3-venv python3-pip pciutils dmidecode
 make dev
 source .venv/bin/activate
-python3 -m macabout
+sudo python3 -m macabout
 ```
 
 ## Developing on macOS
