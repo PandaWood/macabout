@@ -26,6 +26,17 @@ Having a Mac machine isn't compulsory for `macabout` to work - it will still rea
 
 Memory speed/type and serial number require `dmidecode`. If unavailable (e.g. not installed or no root access), those fields degrade gracefully.
 
+## Compatibility
+
+macabout reads system information from standard Linux interfaces (`/etc/os-release`, `/proc/cpuinfo`, `/proc/meminfo`, `lspci`, `dmidecode`, `/sys/class/drm`) and therefore works on any modern Linux distro. Only the **installer** is distro-specific:
+
+| Distro family                | How to install                               |
+|------------------------------|----------------------------------------------|
+| Debian, Ubuntu, Mint, Zorin… | `.deb` from Releases (see below)             |
+| Fedora, Arch, openSUSE, …    | Run from source (see "Running from source") |
+
+The `.deb` also installs a sudoers rule so `dmidecode` runs without a password prompt. On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number — otherwise those fields are simply omitted.
+
 ## Installing on Linux
 
 Download the latest `.deb` from the [Releases](https://github.com/PandaWood/macabout/releases) page, then:
@@ -38,6 +49,8 @@ macabout
 `apt` automatically installs all dependencies (`python3-tk`, `pciutils`, `dmidecode`) before macabout runs.
 
 ## Running from source (developers)
+
+This is also the path for anyone not on a Debian-family distro. Replace the `apt` line with your package manager's equivalents for `python3-tk`, `python3-venv`, `pciutils`, and `dmidecode`.
 
 ```bash
 git clone https://github.com/PandaWood/macabout.git
