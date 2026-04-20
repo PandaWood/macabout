@@ -257,6 +257,21 @@ def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_
     return c
 
 
+def _build_copy_text(display: dict) -> str:
+    header = [display["os_name"]]
+    if display["os_version"]:
+        header.append(f"Version {display['os_version']}")
+    rows = (
+        ("Processor", display["processor"]),
+        ("Memory", display["memory"]),
+        ("Graphics", display["graphics"]),
+        ("Serial Number", display["serial"]),
+    )
+    label_w = max(len(lbl) for lbl, _ in rows)
+    body = [f"{lbl.rjust(label_w)}  {val}" for lbl, val in rows]
+    return "\n".join(header + [""] + body)
+
+
 def show_dialog(display: dict) -> None:
     global BG_COLOR, FG_COLOR, SUBTLE_FG
     palette = _DARK if _detect_dark_mode() else _LIGHT
@@ -271,7 +286,7 @@ def show_dialog(display: dict) -> None:
     family = _pick_font(root)
 
     main = tk.Frame(root, bg=BG_COLOR)
-    main.pack(fill="both", expand=True, padx=16, pady=(16, 60))
+    main.pack(fill="both", expand=True, padx=16, pady=(16, 82))
 
     # Left column — fixed width, icon centered
     left = tk.Frame(main, bg=BG_COLOR, width=LEFT_W)
@@ -344,6 +359,52 @@ def show_dialog(display: dict) -> None:
         bg=BG_COLOR,
         fg=ver_color,
     ).place(relx=1.0, rely=1.0, anchor="se", x=-8, y=-6)
+
+    copy_text = _build_copy_text(display)
+    btn_size = 26
+    copy_btn = tk.Canvas(
+        root, width=btn_size, height=btn_size,
+        bg=BG_COLOR, bd=0, highlightthickness=0, cursor="hand2",
+    )
+    back = copy_btn.create_rectangle(8, 4, 21, 17, outline=SUBTLE_FG, width=2)
+    front = copy_btn.create_rectangle(4, 8, 17, 21, outline=SUBTLE_FG, fill=BG_COLOR, width=2)
+
+    def _do_copy(_e=None):
+        root.clipboard_clear()
+        root.clipboard_append(copy_text)
+        root.update()
+
+    tooltip = {"win": None}
+
+    def _on_enter(_e=None):
+        copy_btn.itemconfig(back, outline=FG_COLOR)
+        copy_btn.itemconfig(front, outline=FG_COLOR)
+        if tooltip["win"]:
+            return
+        tw = tk.Toplevel(root)
+        tw.wm_overrideredirect(True)
+        tk.Label(
+            tw, text="Copy to clipboard",
+            font=(family, 9), bg=FG_COLOR, fg=BG_COLOR,
+            padx=6, pady=2, bd=0,
+        ).pack()
+        tw.update_idletasks()
+        x = copy_btn.winfo_rootx() + (btn_size - tw.winfo_width()) // 2
+        y = copy_btn.winfo_rooty() - tw.winfo_height() - 4
+        tw.wm_geometry(f"+{x}+{y}")
+        tooltip["win"] = tw
+
+    def _on_leave(_e=None):
+        copy_btn.itemconfig(back, outline=SUBTLE_FG)
+        copy_btn.itemconfig(front, outline=SUBTLE_FG)
+        if tooltip["win"]:
+            tooltip["win"].destroy()
+            tooltip["win"] = None
+
+    copy_btn.bind("<Button-1>", _do_copy)
+    copy_btn.bind("<Enter>", _on_enter)
+    copy_btn.bind("<Leave>", _on_leave)
+    copy_btn.place(relx=1.0, rely=1.0, anchor="se", x=-12, y=-44)
 
     root.update_idletasks()
     w = root.winfo_reqwidth()
