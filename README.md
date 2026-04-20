@@ -7,7 +7,24 @@ If you're on a re-purposed Mac and need to see a simple system summary, this mak
 ![macabout screenshot](img/about-this-mac-dark.png)
 
 I created this project because Linux system info is never presented in the same way as a mac machine, and therefore I found it frustrating to compare or understand exactly what Mac I have.
+
 Having a Mac machine isn't compulsory for `macabout` to work - it will still read system information whatever the hardware, but might not make as much sense.
+
+## What it shows
+
+| Field | Source | Example output |
+|---|---|---|
+| Distro name | `/etc/os-release` (`NAME`) | Zorin OS |
+| Version | `/etc/os-release` (`VERSION`, parenthesised suffix stripped) | Version 17.1 |
+| Processor model | `/proc/cpuinfo` (`model name`), cleaned up by family | Intel Xeon W |
+| Processor speed | `/proc/cpuinfo` (`@ X.Y GHz` in model name) | 3.2 GHz |
+| Core count | `/proc/cpuinfo` — unique `(physical id, core id)` pairs | 8-Core |
+| Memory size | `/proc/meminfo` (`MemTotal`), nearest GB | 8 GB |
+| Memory speed/type | `dmidecode -t memory` | 1600 MHz DDR3 |
+| Graphics | `lspci -nn` PCI ID → bundled `gpu_lookup.json`; falls back to parsed `lspci` name + AMD sysfs VRAM | Radeon Pro Vega 56 8 GB |
+| Serial Number | `dmidecode -s system-serial-number` | C02J1234XYZA |
+
+Memory speed/type and serial number require `dmidecode`. If unavailable (e.g. not installed or no root access), those fields degrade gracefully.
 
 ## Installing on Linux
 
@@ -63,19 +80,6 @@ python -m macabout --mock
 `requirements.txt` contains only `Pillow`, which enables clean icon resizing. Everything else (`tkinter`, `subprocess`, `pathlib`, etc.) is Python standard library.
 
 **Requires:** Python 3.10+, `python3-tk`, `pciutils`, `dmidecode`
-
-## What it shows
-
-| Field | Source | Example output |
-|---|---|---|
-| Distro name | `/etc/os-release` | Zorin OS |
-| Version | `/etc/os-release` | Version 17.1 |
-| Processor | `/proc/cpuinfo` | 3.2 GHz 8-Core Intel Xeon W |
-| Memory | `/proc/meminfo` + `dmidecode` | 8 GB 1600 MHz DDR3 |
-| Graphics | `lspci` + bundled lookup table | Radeon Pro Vega 56 8 GB |
-| Serial Number | `dmidecode` | C02J1234XYZA |
-
-Memory speed/type and serial number require `dmidecode`. If unavailable (e.g. not installed or no root access), those fields degrade gracefully.
 
 ## Distro icon
 
