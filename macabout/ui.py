@@ -369,37 +369,70 @@ def show_dialog(display: dict) -> None:
     back = copy_btn.create_rectangle(8, 4, 21, 17, outline=SUBTLE_FG, width=2)
     front = copy_btn.create_rectangle(4, 8, 17, 21, outline=SUBTLE_FG, fill=BG_COLOR, width=2)
 
+    tooltip = {"win": None, "label": None, "copied_job": None}
+
+    def _position_tooltip():
+        tw = tooltip["win"]
+        tw.update_idletasks()
+        w = tooltip["label"].winfo_reqwidth()
+        h = tooltip["label"].winfo_reqheight()
+        x = copy_btn.winfo_rootx() + (btn_size - w) // 2
+        y = copy_btn.winfo_rooty() - h - 4
+        tw.wm_geometry(f"{w}x{h}+{x}+{y}")
+
+    def _set_tooltip(text):
+        if tooltip["win"] is None:
+            tw = tk.Toplevel(root)
+            tw.wm_overrideredirect(True)
+            lbl = tk.Label(
+                tw, text=text,
+                font=(family, 9), bg=FG_COLOR, fg=BG_COLOR,
+                padx=6, pady=2, bd=0,
+            )
+            lbl.pack()
+            tooltip["win"] = tw
+            tooltip["label"] = lbl
+        else:
+            tooltip["label"].config(text=text)
+        _position_tooltip()
+
+    def _hide_tooltip():
+        if tooltip["win"]:
+            tooltip["win"].destroy()
+            tooltip["win"] = None
+            tooltip["label"] = None
+
+    def _end_copied():
+        tooltip["copied_job"] = None
+        px, py = root.winfo_pointerxy()
+        bx, by = copy_btn.winfo_rootx(), copy_btn.winfo_rooty()
+        if bx <= px <= bx + btn_size and by <= py <= by + btn_size:
+            _set_tooltip("Copy to clipboard")
+        else:
+            _hide_tooltip()
+
     def _do_copy(_e=None):
         root.clipboard_clear()
         root.clipboard_append(copy_text)
         root.update()
-
-    tooltip = {"win": None}
+        _set_tooltip("Copied!")
+        if tooltip["copied_job"] is not None:
+            root.after_cancel(tooltip["copied_job"])
+        tooltip["copied_job"] = root.after(1500, _end_copied)
 
     def _on_enter(_e=None):
         copy_btn.itemconfig(back, outline=FG_COLOR)
         copy_btn.itemconfig(front, outline=FG_COLOR)
-        if tooltip["win"]:
+        if tooltip["copied_job"] is not None:
             return
-        tw = tk.Toplevel(root)
-        tw.wm_overrideredirect(True)
-        tk.Label(
-            tw, text="Copy to clipboard",
-            font=(family, 9), bg=FG_COLOR, fg=BG_COLOR,
-            padx=6, pady=2, bd=0,
-        ).pack()
-        tw.update_idletasks()
-        x = copy_btn.winfo_rootx() + (btn_size - tw.winfo_width()) // 2
-        y = copy_btn.winfo_rooty() - tw.winfo_height() - 4
-        tw.wm_geometry(f"+{x}+{y}")
-        tooltip["win"] = tw
+        _set_tooltip("Copy to clipboard")
 
     def _on_leave(_e=None):
         copy_btn.itemconfig(back, outline=SUBTLE_FG)
         copy_btn.itemconfig(front, outline=SUBTLE_FG)
-        if tooltip["win"]:
-            tooltip["win"].destroy()
-            tooltip["win"] = None
+        if tooltip["copied_job"] is not None:
+            return
+        _hide_tooltip()
 
     copy_btn.bind("<Button-1>", _do_copy)
     copy_btn.bind("<Enter>", _on_enter)
