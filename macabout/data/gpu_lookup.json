@@ -5,8 +5,8 @@
   "8086:0126": {"name": "Intel HD Graphics 3000", "vram_mb": 512},
   "8086:0152": {"name": "Intel HD Graphics 2500", "vram_mb": 1024},
   "8086:0156": {"name": "Intel HD Graphics 2500", "vram_mb": 1024},
-  "8086:0162": {"name": "Intel HD Graphics 4000", "vram_mb": 1024},
-  "8086:0166": {"name": "Intel HD Graphics 4000", "vram_mb": 1024},
+  "8086:0162": {"name": "Intel HD Graphics 4000", "vram_mb": 1536},
+  "8086:0166": {"name": "Intel HD Graphics 4000", "vram_mb": 1536},
   "8086:016a": {"name": "Intel HD Graphics P4000", "vram_mb": 1024},
   "8086:0402": {"name": "Intel HD Graphics", "vram_mb": 1024},
   "8086:0412": {"name": "Intel HD Graphics 4600", "vram_mb": 1024},
@@ -59,8 +59,5 @@
   "10de:1b81": {"name": "NVIDIA GeForce GTX 1070", "vram_mb": 8192},
   "1002:67df": {"name": "AMD Radeon RX 580", "vram_mb": 8192},
   "1002:699f": {"name": "AMD Radeon RX 550", "vram_mb": 4096},
-  "1002:6938": {"name": "AMD Radeon R9 M395X", "vram_mb": 4096},
-  "1002:687f": {"name": "Radeon Pro Vega 56", "vram_mb": 8192},
-  "1002:6860": {"name": "Radeon Pro Vega 64", "vram_mb": 16384},
-  "1002:6861": {"name": "Radeon Pro Vega 56", "vram_mb": 8192}
+  "1002:6938": {"name": "AMD Radeon R9 M395X", "vram_mb": 4096}
 }
