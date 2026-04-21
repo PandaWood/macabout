@@ -6,6 +6,7 @@ set -e
 
 REPO="PandaWood/macabout"
 TEMP_DIR=$(mktemp -d)
+chmod 755 "$TEMP_DIR"
 trap 'echo ""; echo "❌ Installation cancelled."; rm -rf "$TEMP_DIR"; exit 1' INT TERM
 REQUIRED_DEPS="python3-tk pciutils dmidecode"
 
