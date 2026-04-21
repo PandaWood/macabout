@@ -28,16 +28,38 @@
             overflow-x: auto;
         }
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
             color: white;
-            padding: 40px;
-            border-radius: 10px;
-            margin-bottom: 30px;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
         }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero h1, .hero p { position: relative; z-index: 1; }
         .hero h1 { color: white; margin: 0; }
         .hero p { font-size: 1.2em; margin: 10px 0 0 0; opacity: 0.95; }
         a { color: #3498db; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        .screenshot {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -55,6 +77,8 @@
     <h2>What is macabout?</h2>
 
     <p><strong>macabout</strong> presents your Linux machine's hardware in the same format as macOS (via "About this Mac..."). Perfect for comparing specs on repurposed Mac hardware.</p>
+
+    <img src="img/about-this-mac-dark.png" alt="macabout screenshot" class="screenshot">
 
     <ul>
         <li>Shows CPU model, speed, and core count</li>
