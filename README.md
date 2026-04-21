@@ -4,11 +4,12 @@
 
 If you're on a re-purposed Mac and need to see a simple system summary, this makes complete sense.
 
-![macabout on Zorin](img/about-this-mac-dark.png) ![macabout on Linux Mint](img/mint-screenshot.png)
+![macabout on Linux Mint](img/mint-screenshot.png)
 
-I created this project because Linux system info is never presented in the same way as a mac machine, and so I found it slightly annoying to compare or understand exactly what Mac I have.
+## Why?
+I created this project because I use old converted Macs and Linux system info is never presented in the same way, so I found it slightly annoying to compare or understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
 
-Having a Mac isn't compulsory for `macabout` to work - it will still read system information whatever hardware, but might not make as much sense.
+Having a Mac isn't compulsory for `macabout` to work - it's compatible with any hardware, but might not make as much sense.
 
 ## What macabout shows
 
@@ -33,12 +34,9 @@ Memory speed/type and serial number require `dmidecode`.
 ```bash
 curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash
 ```
-
-This downloads and installs the latest version automatically.
-
 ### Manual install
 
-See the [Releases](https://github.com/PandaWood/macabout/releases) page for `.deb` downloads and installation instructions.
+See the [Releases](https://github.com/PandaWood/macabout/releases) for instructions.
 
 ## Compatibility
 
@@ -49,7 +47,8 @@ macabout reads system information from standard Linux interfaces and therefore w
 | Debian, Ubuntu, Mint, Zorin… | `.deb` from Releases (see below)             |
 | Fedora, Arch, openSUSE, …    | Run from source (see "Running from source") |
 
-The `.deb` installs a sudoers rule so `dmidecode` runs without a password prompt. On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
+The `.deb` installs a sudoers rule so `dmidecode` runs without a password prompt. 
+On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
 
 ## Running from source (devs or deviants)
 
@@ -66,32 +65,20 @@ sudo python3 -m macabout
 
 ## Developing on macOS
 
-If you don't have a linux machine nearby and you're desperate to work on it...
-tkinter ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
+If you don't have a linux machine nearby and you're desperate to work on it... 
+install tkinter/Python via Homebrew, matching the version numbers:
 
 ```bash
 brew install python@3.14
 brew install python-tk@3.14
 ```
-
-Then set up the virtualenv:
+Then setup/run:
 
 ```bash
 make dev
 source .venv/bin/activate
-```
-
-Run:
-
-```bash
 make mock     # static Zorin OS sample data (good for UI work)
 make run      # real macOS system calls
-```
-
-Or directly:
-
-```bash
-python -m macabout --mock
 ```
 
 ## Distro icon
@@ -104,17 +91,10 @@ The icon is sourced from the running system's own branding, in this order:
 4. A bundled PNG at `macabout/data/icons/{distro_id}.png` if present
 5. A brand-colored circle with the distro's initial letter (pure tkinter, no extra deps)
 
-To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. The `distro_id` matches the `ID=` field in `/etc/os-release` (e.g. `zorin.png`, `ubuntu.png`).
+To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. The `distro_id` matches the `ID=` field in `/etc/os-release`.
 
 ## GPU lookup table
 
-Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (e.g. `"8086:0a26"`). The file ships with ~60 entries covering Intel HD/Iris/UHD Graphics from Sandy Bridge through Coffee Lake, plus a handful of common AMD and NVIDIA cards. On Linux, VRAM is also read from the AMD sysfs interface as a fallback for cards not in the lookup. Add entries to extend coverage without touching application code.
+Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
 
-## Building the .deb
-
-```bash
-./build.sh
-sudo apt install ./build/macabout_1.0.0_all.deb
-```
-
-Requires `dpkg-deb` (standard on Debian/Ubuntu).
+The file ships with ~60 entries covering Intel HD/Iris/UHD Graphics from Sandy Bridge through Coffee Lake, plus a handful of common cards. Add entries to extend coverage without touching app code.
