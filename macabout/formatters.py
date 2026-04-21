@@ -81,6 +81,12 @@ def format_memory(total_mb: int, speed_mhz: int | None, type_: str | None) -> st
     return " ".join(parts)
 
 
+def _format_vram(vram_mb: int) -> str:
+    if vram_mb % 1024 == 0:
+        return f"{vram_mb // 1024} GB"
+    return f"{vram_mb} MB"
+
+
 def format_graphics(gpu_raw: str, pci_id: str | None, vram_mb: int | None = None) -> str:
     if pci_id:
         entry = _GPU_LOOKUP.get(pci_id.lower())
@@ -88,8 +94,7 @@ def format_graphics(gpu_raw: str, pci_id: str | None, vram_mb: int | None = None
             name = entry["name"]
             vram_mb = entry.get("vram_mb")
             if vram_mb:
-                vram_gb = round(vram_mb / 1024)
-                return f"{name} {vram_gb} GB"
+                return f"{name} {_format_vram(vram_mb)}"
             return name
     if not gpu_raw:
         return "N/A"
@@ -107,7 +112,7 @@ def format_graphics(gpu_raw: str, pci_id: str | None, vram_mb: int | None = None
         name = re.sub(r"\s*\([^)]*\)\s*", " ", name)
         name = re.sub(r"\s+", " ", name).strip()
     if vram_mb:
-        return f"{name} {round(vram_mb / 1024)} GB"
+        return f"{name} {_format_vram(vram_mb)}"
     return name
 
 
