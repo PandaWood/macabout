@@ -6,6 +6,7 @@ set -e
 
 REPO="PandaWood/macabout"
 TEMP_DIR=$(mktemp -d)
+trap 'echo ""; echo "❌ Installation cancelled."; rm -rf "$TEMP_DIR"; exit 1' INT TERM
 REQUIRED_DEPS="python3-tk pciutils dmidecode"
 
 echo "🔍 Fetching latest macabout release..."
