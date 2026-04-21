@@ -38,10 +38,18 @@ jobs:
       - name: Upload release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/macabout_*_all.deb
+          files: |
+            build/macabout_*_all.deb
+            install.sh
           generate_release_notes: true
           body: |
-            ## Install
+            ## Quick Install (One-Line)
+
+            ```bash
+            curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash
+            ```
+
+            ## Manual Install
 
             ```bash
             sudo apt install ./macabout_*.deb
@@ -49,3 +57,15 @@ jobs:
 
             **Requires:** `python3-tk`, `pciutils`, `dmidecode`
             **Recommends:** `python3-pil` (icon resizing)
+
+      - name: Prepare GitHub Pages
+        run: |
+          cp install.sh docs/install.sh
+          cp -r img docs/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          keep_files: false

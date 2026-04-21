@@ -26,6 +26,20 @@ Having a Mac isn't compulsory for `macabout` to work - it will still read system
 
 Memory speed/type and serial number require `dmidecode`.
 
+## Installing on Linux
+
+### Quick install (one-line)
+
+```bash
+curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash
+```
+
+This downloads and installs the latest version automatically.
+
+### Manual install
+
+See the [Releases](https://github.com/PandaWood/macabout/releases) page for `.deb` downloads and installation instructions.
+
 ## Compatibility
 
 macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **installer** is distro-specific:
@@ -36,15 +50,6 @@ macabout reads system information from standard Linux interfaces and therefore w
 | Fedora, Arch, openSUSE, …    | Run from source (see "Running from source") |
 
 The `.deb` also installs a sudoers rule so `dmidecode` runs without a password prompt. On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
-
-## Installing on Linux
-
-Download the latest `.deb` from the [Releases](https://github.com/PandaWood/macabout/releases) page, then:
-
-```bash
-sudo apt install ./macabout_1.0.0_all.deb
-macabout
-```
 
 ## Running from source (devs or deviants)
 
