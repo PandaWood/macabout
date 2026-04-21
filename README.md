@@ -4,7 +4,7 @@
 
 If you're on a re-purposed Mac and need to see a simple system summary, this makes complete sense.
 
-![macabout screenshot](img/about-this-mac-dark.png)
+![macabout on Zorin](img/about-this-mac-dark.png) ![macabout on Linux Mint](img/mint-screenshot.png)
 
 I created this project because Linux system info is never presented in the same way as a mac machine, and so I found it slightly annoying to compare or understand exactly what Mac I have.
 
@@ -49,7 +49,7 @@ macabout reads system information from standard Linux interfaces and therefore w
 | Debian, Ubuntu, Mint, Zorin… | `.deb` from Releases (see below)             |
 | Fedora, Arch, openSUSE, …    | Run from source (see "Running from source") |
 
-The `.deb` also installs a sudoers rule so `dmidecode` runs without a password prompt. On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
+The `.deb` installs a sudoers rule so `dmidecode` runs without a password prompt. On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
 
 ## Running from source (devs or deviants)
 
