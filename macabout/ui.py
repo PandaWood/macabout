@@ -159,7 +159,10 @@ def _find_system_icon(distro_id: str, logo_id: str = "") -> str | None:
     dirs = [
         "/usr/share/icons/hicolor/256x256/apps",
         "/usr/share/icons/hicolor/128x128/apps",
+        "/usr/share/icons/hicolor/96x96/apps",
         "/usr/share/icons/hicolor/64x64/apps",
+        "/usr/share/icons/hicolor/48x48/apps",
+        "/usr/share/icons/hicolor/scalable/apps",
         "/usr/share/pixmaps",
     ]
     for name in candidates:
