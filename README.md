@@ -65,8 +65,8 @@ sudo python3 -m macabout
 
 ## Developing on macOS
 
-If you don't have a linux machine nearby and you're desperate to work on it... 
-install tkinter/Python via Homebrew, matching the version numbers:
+If you don't have a linux machine nearby and you're desperate to work on it...
+**tkinter** ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
 
 ```bash
 brew install python@3.14
@@ -95,6 +95,5 @@ To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200
 
 ## GPU lookup table
 
-Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
-
-The file ships with ~60 entries covering Intel HD/Iris/UHD Graphics from Sandy Bridge through Coffee Lake, plus a handful of common cards. Add entries to extend coverage without touching app code.
+Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (e.g. `"8086:0a26"`). 
+The file ships with ~60 entries covering Intel HD/Iris/UHD Graphics from Sandy Bridge through Coffee Lake, plus a handful of common AMD and NVIDIA cards. On Linux, VRAM is also read from the AMD sysfs interface as a fallback for cards not in the lookup. Add entries to extend coverage without touching code.

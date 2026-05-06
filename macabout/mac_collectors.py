@@ -121,3 +121,9 @@ def get_serial_number() -> str | None:
         return None
     m = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]+)"', out)
     return m.group(1) if m else None
+
+
+def get_machine_model() -> str | None:
+    sp = _system_profiler()
+    m = re.search(r"^\s*Model Name:\s*(.+)$", sp, re.MULTILINE)
+    return m.group(1).strip() if m else None

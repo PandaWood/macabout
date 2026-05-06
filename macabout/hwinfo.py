@@ -21,6 +21,7 @@ class SystemInfo:
     gpu_pci_id: str | None
     gpu_vram_mb: int | None
     serial: str | None
+    machine_model: str | None
 
 
 def collect_system_info(force_mock: bool = False) -> SystemInfo:
@@ -52,4 +53,5 @@ def collect_system_info(force_mock: bool = False) -> SystemInfo:
         gpu_pci_id=gpu.get("pci_id"),
         gpu_vram_mb=gpu.get("vram_mb"),
         serial=backend.get_serial_number(),
+        machine_model=backend.get_machine_model(),
     )

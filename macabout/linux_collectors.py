@@ -195,3 +195,17 @@ def get_serial_number() -> str | None:
     if value.lower() in placeholder:
         return None
     return value
+
+
+def get_machine_model() -> str | None:
+    out = _run_dmidecode(["-s", "system-product-name"])
+    if not out:
+        return None
+    lines = [ln.strip() for ln in out.strip().splitlines() if ln.strip() and not ln.startswith("#")]
+    if not lines:
+        return None
+    value = lines[-1]
+    placeholder = {"", "none", "not specified", "to be filled by o.e.m.", "system product name", "default string"}
+    if value.lower() in placeholder:
+        return None
+    return value

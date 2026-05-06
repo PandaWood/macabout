@@ -28,9 +28,13 @@ def format_processor(raw: str, cores: int | None = None) -> str:
         return s.strip()
 
     ghz_m = re.search(r"@\s*(\d+(?:\.\d+)?)\s*GHz", s, re.IGNORECASE)
-    ghz = f"{round(float(ghz_m.group(1)), 1)}" if ghz_m else None
+    ghz = f"{round(float(ghz_m.group(1)), 1):g}" if ghz_m else None
 
-    core_str = f"{cores}-Core " if cores else ""
+    _core_names = {2: "Dual", 4: "Quad"}
+    if cores:
+        core_str = f"{_core_names.get(cores, str(cores))}-Core "
+    else:
+        core_str = ""
 
     core_m = re.search(r"Core\s+(i[3579])", s)
     if core_m:
@@ -122,6 +126,7 @@ def format_all(info: SystemInfo) -> dict:
         "os_version": info.os_version or "",
         "distro_id": info.distro_id,
         "logo_id": info.logo_id,
+        "model": info.machine_model or "",
         "processor": format_processor(info.cpu_raw, info.cpu_cores),
         "memory": format_memory(info.mem_total_mb, info.mem_speed_mhz, info.mem_type),
         "graphics": format_graphics(info.gpu_raw, info.gpu_pci_id, info.gpu_vram_mb),

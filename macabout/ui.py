@@ -264,12 +264,14 @@ def _build_copy_text(display: dict) -> str:
     header = [display["os_name"]]
     if display["os_version"]:
         header.append(f"Version {display['os_version']}")
-    rows = (
+    if display.get("model"):
+        header.append(display["model"])
+    rows = [
         ("Processor", display["processor"]),
         ("Memory", display["memory"]),
         ("Graphics", display["graphics"]),
         ("Serial Number", display["serial"]),
-    )
+    ]
     label_w = max(len(lbl) for lbl, _ in rows)
     body = [f"{lbl.rjust(label_w)}  {val}" for lbl, val in rows]
     return "\n".join(header + [""] + body)
@@ -301,7 +303,7 @@ def show_dialog(display: dict) -> None:
 
     # Right column — title, version, spec rows
     right = tk.Frame(main, bg=BG_COLOR)
-    right.pack(side="left", fill="both", expand=True, padx=(0, 48))
+    right.pack(side="left", fill="both", expand=True, padx=(0, 72))
 
     tk.Label(
         right,
@@ -321,14 +323,24 @@ def show_dialog(display: dict) -> None:
         bg=BG_COLOR,
         fg=SUBTLE_FG,
         anchor="w",
-    ).pack(anchor="w", pady=(0, 18))
+    ).pack(anchor="w", pady=(0, 2))
 
-    rows = (
+    if display.get("model"):
+        tk.Label(
+            right,
+            text=display["model"],
+            font=(family, 12),
+            bg=BG_COLOR,
+            fg=FG_COLOR,
+            anchor="w",
+        ).pack(anchor="w", pady=(0, 14))
+
+    rows = [
         ("Processor", display["processor"]),
         ("Memory", display["memory"]),
         ("Graphics", display["graphics"]),
         ("Serial Number", display["serial"]),
-    )
+    ]
 
     grid = tk.Frame(right, bg=BG_COLOR)
     grid.pack(anchor="w")
@@ -341,7 +353,6 @@ def show_dialog(display: dict) -> None:
             bg=BG_COLOR,
             fg=FG_COLOR,
             anchor="e",
-            width=13,
         ).grid(row=i, column=0, sticky="e", padx=(0, 8), pady=4)
         tk.Label(
             grid,
@@ -350,7 +361,7 @@ def show_dialog(display: dict) -> None:
             bg=BG_COLOR,
             fg=FG_COLOR,
             anchor="w",
-            wraplength=420,
+            wraplength=520,
             justify="left",
         ).grid(row=i, column=1, sticky="w", pady=4)
 
