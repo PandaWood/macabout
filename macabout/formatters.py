@@ -40,7 +40,7 @@ def format_processor(raw: str, cores: int | None = None) -> str:
     if core_m:
         family = f"Intel Core {core_m.group(1)}"
     elif "Xeon" in s:
-        xeon_m = re.search(r"Xeon\s+(\w+)", s)
+        xeon_m = re.search(r"Xeon\s+([\w-]+)", s)
         suffix = f" {xeon_m.group(1)}" if xeon_m and not xeon_m.group(1).startswith("CPU") else ""
         family = f"Intel Xeon{suffix}"
     elif "Pentium" in s:

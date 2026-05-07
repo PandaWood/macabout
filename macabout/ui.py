@@ -4,13 +4,20 @@ import platform
 import tkinter as tk
 from pathlib import Path
 from tkinter import font as tkfont
+from typing import NamedTuple
 
-_LIGHT = {"bg": "#ECECEC", "fg": "#1A1A1A", "subtle": "#4D4D4D", "ver": "#AAAAAA"}
-_DARK  = {"bg": "#242424", "fg": "#F2F2F2", "subtle": "#AAAAAA", "ver": "#666666"}
+from . import __version__
 
-BG_COLOR = _LIGHT["bg"]
-FG_COLOR = _LIGHT["fg"]
-SUBTLE_FG = _LIGHT["subtle"]
+
+class _Palette(NamedTuple):
+    bg: str
+    fg: str
+    subtle: str
+    ver: str
+
+
+_LIGHT = _Palette(bg="#ECECEC", fg="#1A1A1A", subtle="#4D4D4D", ver="#AAAAAA")
+_DARK  = _Palette(bg="#242424", fg="#F2F2F2", subtle="#AAAAAA", ver="#666666")
 
 
 def _detect_dark_mode() -> bool:
@@ -96,8 +103,6 @@ def _detect_dark_mode() -> bool:
             pass
     return False
 
-WINDOW_W = 680
-WINDOW_H = 330
 ICON_SIZE = 180
 LEFT_W = 240
 
@@ -208,14 +213,20 @@ def _svg_to_photoimage(path: str, size: int) -> tk.PhotoImage | None:
     return None
 
 
-def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_id: str = "") -> tk.Widget:
+def _make_icon_widget(
+    parent: tk.Widget,
+    distro_id: str,
+    distro_name: str,
+    logo_id: str = "",
+    bg_color: str = _LIGHT.bg,
+) -> tk.Widget:
     size = ICON_SIZE
     path = _find_bundled_icon(distro_id) or _find_system_icon(distro_id, logo_id)
 
     if path and path.endswith(".svg"):
         photo = _svg_to_photoimage(path, size)
         if photo:
-            lbl = tk.Label(parent, image=photo, bg=BG_COLOR, bd=0)
+            lbl = tk.Label(parent, image=photo, bg=bg_color, bd=0)
             lbl._photo = photo
             return lbl
         path = None  # SVG conversion failed — fall through to canvas
@@ -226,7 +237,7 @@ def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_
             from PIL import Image, ImageTk
             img = Image.open(path).convert("RGBA").resize((size, size), Image.LANCZOS)
             photo = ImageTk.PhotoImage(img)
-            lbl = tk.Label(parent, image=photo, bg=BG_COLOR, bd=0)
+            lbl = tk.Label(parent, image=photo, bg=bg_color, bd=0)
             lbl._photo = photo  # prevent GC
             return lbl
         except Exception:
@@ -239,7 +250,7 @@ def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_
                 if max(w, h) > size:
                     factor = max(w, h) // size + 1
                     photo = photo.subsample(factor, factor)
-                lbl = tk.Label(parent, image=photo, bg=BG_COLOR, bd=0)
+                lbl = tk.Label(parent, image=photo, bg=bg_color, bd=0)
                 lbl._photo = photo
                 return lbl
             except Exception:
@@ -247,7 +258,7 @@ def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_
 
     # Canvas fallback: brand-colored circle with distro initial
     color = _brand_color(distro_id)
-    c = tk.Canvas(parent, width=size, height=size, bg=BG_COLOR, bd=0, highlightthickness=0)
+    c = tk.Canvas(parent, width=size, height=size, bg=bg_color, bd=0, highlightthickness=0)
     pad = size // 18
     c.create_oval(pad, pad, size - pad, size - pad, fill=color, outline="")
     if distro_name:
@@ -260,28 +271,34 @@ def _make_icon_widget(parent: tk.Widget, distro_id: str, distro_name: str, logo_
     return c
 
 
+# Single definition of the spec rows — used by both the grid and the copy text.
+# Each entry is (display_label, display_dict_key).
+_SPEC_ROWS: tuple[tuple[str, str], ...] = (
+    ("Processor",     "processor"),
+    ("Memory",        "memory"),
+    ("Graphics",      "graphics"),
+    ("Serial Number", "serial"),
+)
+
+
 def _build_copy_text(display: dict) -> str:
     header = [display["os_name"]]
     if display["os_version"]:
         header.append(f"Version {display['os_version']}")
     if display.get("model"):
         header.append(display["model"])
-    rows = [
-        ("Processor", display["processor"]),
-        ("Memory", display["memory"]),
-        ("Graphics", display["graphics"]),
-        ("Serial Number", display["serial"]),
-    ]
+    rows = [(label, display[key]) for label, key in _SPEC_ROWS]
     label_w = max(len(lbl) for lbl, _ in rows)
     body = [f"{lbl.rjust(label_w)}  {val}" for lbl, val in rows]
     return "\n".join(header + [""] + body)
 
 
 def show_dialog(display: dict) -> None:
-    global BG_COLOR, FG_COLOR, SUBTLE_FG
     palette = _DARK if _detect_dark_mode() else _LIGHT
-    BG_COLOR, FG_COLOR, SUBTLE_FG = palette["bg"], palette["fg"], palette["subtle"]
-    ver_color = palette["ver"]
+    BG_COLOR = palette.bg
+    FG_COLOR = palette.fg
+    SUBTLE_FG = palette.subtle
+    ver_color = palette.ver
 
     root = tk.Tk()
     root.title("About This Computer")
@@ -298,7 +315,7 @@ def show_dialog(display: dict) -> None:
     left.pack(side="left", fill="y")
     left.pack_propagate(False)
 
-    icon_w = _make_icon_widget(left, display["distro_id"], display["os_name"], display.get("logo_id", ""))
+    icon_w = _make_icon_widget(left, display["distro_id"], display["os_name"], display.get("logo_id", ""), BG_COLOR)
     icon_w.place(relx=0.5, rely=0.5, anchor="center")
 
     # Right column — title, version, spec rows
@@ -335,12 +352,7 @@ def show_dialog(display: dict) -> None:
             anchor="w",
         ).pack(anchor="w", pady=(0, 14))
 
-    rows = [
-        ("Processor", display["processor"]),
-        ("Memory", display["memory"]),
-        ("Graphics", display["graphics"]),
-        ("Serial Number", display["serial"]),
-    ]
+    rows = [(label, display[key]) for label, key in _SPEC_ROWS]
 
     grid = tk.Frame(right, bg=BG_COLOR)
     grid.pack(anchor="w")
@@ -365,7 +377,6 @@ def show_dialog(display: dict) -> None:
             justify="left",
         ).grid(row=i, column=1, sticky="w", pady=4)
 
-    from . import __version__
     tk.Label(
         root,
         text=f"macabout v{__version__}",

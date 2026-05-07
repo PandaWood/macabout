@@ -44,7 +44,7 @@ def get_os_info() -> dict | None:
     codename = _MACOS_CODENAMES.get(key, "")
     if codename:
         name = f"{name} {codename}"
-    return {"name": name, "version": version, "id": "macos"}
+    return {"name": name, "version": version, "id": "macos", "logo": ""}
 
 
 def get_cpu_core_count() -> int | None:

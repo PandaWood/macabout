@@ -183,29 +183,28 @@ def get_graphics_info() -> dict | None:
     return info
 
 
-def get_serial_number() -> str | None:
-    out = _run_dmidecode(["-s", "system-serial-number"])
+_DMI_PLACEHOLDERS = frozenset({
+    "", "none", "not specified", "to be filled by o.e.m.", "default string",
+})
+
+
+def _dmi_string(dmi_type: str, extra_placeholder: str = "") -> str | None:
+    out = _run_dmidecode(["-s", dmi_type])
     if not out:
         return None
     lines = [ln.strip() for ln in out.strip().splitlines() if ln.strip() and not ln.startswith("#")]
     if not lines:
         return None
     value = lines[-1]
-    placeholder = {"", "none", "not specified", "to be filled by o.e.m.", "system serial number", "default string"}
-    if value.lower() in placeholder:
+    placeholders = _DMI_PLACEHOLDERS | ({extra_placeholder.lower()} if extra_placeholder else set())
+    if value.lower() in placeholders:
         return None
     return value
+
+
+def get_serial_number() -> str | None:
+    return _dmi_string("system-serial-number", "system serial number")
 
 
 def get_machine_model() -> str | None:
-    out = _run_dmidecode(["-s", "system-product-name"])
-    if not out:
-        return None
-    lines = [ln.strip() for ln in out.strip().splitlines() if ln.strip() and not ln.startswith("#")]
-    if not lines:
-        return None
-    value = lines[-1]
-    placeholder = {"", "none", "not specified", "to be filled by o.e.m.", "system product name", "default string"}
-    if value.lower() in placeholder:
-        return None
-    return value
+    return _dmi_string("system-product-name", "system product name")
