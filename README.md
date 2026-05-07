@@ -17,6 +17,7 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 |---|---|---|
 | Distro name | `/etc/os-release` (`NAME`) | Zorin OS |
 | Version | `/etc/os-release` (`VERSION`, parenthesised suffix stripped) | Version 17.1 |
+| Machine model | `dmidecode -s system-product-name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
 | Processor model | `/proc/cpuinfo` (`model name`), cleaned up by family | Intel Xeon W |
 | Processor speed | `/proc/cpuinfo` (`@ X.Y GHz` in model name) | 3.2 GHz |
 | Core count | `/proc/cpuinfo` — unique `(physical id, core id)` pairs | 8-Core |
@@ -25,7 +26,7 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 | Graphics | `lspci -nn` PCI ID → bundled `gpu_lookup.json`; falls back to parsed `lspci` name + AMD sysfs VRAM | Radeon Pro Vega 56 8 GB |
 | Serial Number | `dmidecode -s system-serial-number` | C02J1234XYZA |
 
-Memory speed/type and serial number require `dmidecode`.
+Memory speed/type, machine model, and serial number require `dmidecode`.
 
 ## Installing on Linux
 
