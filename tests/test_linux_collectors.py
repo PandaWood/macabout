@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import textwrap
 
-import pytest
-
 from macabout.linux_collectors import (
     _parse_dmidecode_memory,
     _parse_lspci_vga,

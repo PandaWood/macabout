@@ -1,8 +1,6 @@
 """Tests for macabout.formatters — all pure functions, no I/O."""
 from __future__ import annotations
 
-import pytest
-
 from macabout.formatters import (
     _format_vram,
     _snap_gb,

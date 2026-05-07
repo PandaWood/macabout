@@ -1,4 +1,4 @@
-.PHONY: dev run mock build clean
+.PHONY: dev run mock test build clean
 
 PYTHON := python3
 VENV := .venv
@@ -24,6 +24,9 @@ run:
 
 mock:
 	$(VENV_PYTHON) -m macabout --mock
+
+test:
+	$(VENV_PYTHON) -m pytest tests/
 
 build:
 	./build.sh
