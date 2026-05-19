@@ -325,12 +325,12 @@ def show_dialog(display: dict) -> None:
     tk.Label(
         right,
         text=display["os_name"],
-        font=(family, 24),
+        font=(family, 24, "bold"),
         bg=BG_COLOR,
         fg=FG_COLOR,
         anchor="w",
         justify="left",
-    ).pack(anchor="w", pady=(36, 4))
+    ).pack(anchor="w", pady=(20, 4))
 
     version_text = f"Version {display['os_version']}" if display["os_version"] else ""
     tk.Label(
@@ -355,17 +355,17 @@ def show_dialog(display: dict) -> None:
     rows = [(label, display[key]) for label, key in _SPEC_ROWS]
 
     grid = tk.Frame(right, bg=BG_COLOR)
-    grid.pack(anchor="w")
+    grid.pack(anchor="w", pady=(8, 0))
 
     for i, (label, value) in enumerate(rows):
         tk.Label(
             grid,
             text=label,
-            font=(family, 11, "bold"),
+            font=(family, 11),
             bg=BG_COLOR,
-            fg=FG_COLOR,
+            fg=SUBTLE_FG,
             anchor="e",
-        ).grid(row=i, column=0, sticky="e", padx=(0, 8), pady=4)
+        ).grid(row=i, column=0, sticky="e", padx=(0, 12), pady=4)
         tk.Label(
             grid,
             text=value,
