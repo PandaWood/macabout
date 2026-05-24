@@ -1,13 +1,13 @@
 # macabout
 
-`macabout` presents your Linux machine's hardware in the same format as macOS (via "About this Mac...")
+`macabout` presents your Linux machine's hardware in the same format as macOS (`About this Mac...`s)
 
 If you're on a re-purposed Mac and need to see a simple system summary, this makes complete sense.
 
-![macabout on Linux Mint](img/mint-screenshot.png)
+![macabout on Linux Mint](img/macabout-mint-light.png)
 
 ## Why?
-I created this project because I use old, converted Macs and Linux system-info is not presented in the same way, so I found it slightly annoying to compare or understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
+I use old Macs with Linux installed and system-info is not presented in the same way; so I found it slightly annoying to try understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
 
 Having a Mac isn't compulsory for `macabout` to work - it's compatible with any hardware, but might not make as much sense.
 
