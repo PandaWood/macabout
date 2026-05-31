@@ -29,7 +29,8 @@ curl -sSL "$LATEST_URL" -o "$DEB_FILE"
 
 echo "📦 Installing macabout..."
 chmod 644 "$DEB_FILE"
-apt install -y "$DEB_FILE"
+dpkg -i "$DEB_FILE"
+apt-get install -f -y
 
 echo "✓ macabout installed successfully!"
 echo ""
