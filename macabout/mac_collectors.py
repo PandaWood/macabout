@@ -13,6 +13,15 @@ _MACOS_CODENAMES: dict[str, str] = {
     "10.15": "Catalina",
     "10.14": "Mojave",
     "10.13": "High Sierra",
+    "10.12": "Sierra",
+    "10.11": "El Capitan",
+    "10.10": "Yosemite",
+    "10.9": "Mavericks",
+    "10.8": "Mountain Lion",
+    "10.7": "Lion",
+    "10.6": "Snow Leopard",
+    "10.5": "Leopard",
+    "10.4": "Tiger",
 }
 
 
@@ -55,11 +64,11 @@ def get_cpu_core_count() -> int | None:
 
 
 def get_processor_raw() -> str | None:
-    # sysctl is fast and works on both Intel and Apple Silicon
+    # sysctl brand_string works on Intel; absent on Apple Silicon and PowerPC
     out = _run(["sysctl", "-n", "machdep.cpu.brand_string"])
     if out and out.strip():
         return out.strip()
-    # Apple Silicon fallback: "Chip:" line in system_profiler SPHardwareDataType
+    # Apple Silicon: "Chip:" line; PowerPC and older Intel: "Processor Name:"
     sp = _system_profiler()
     m = re.search(r"Chip:\s*(.+)", sp)
     if m:
