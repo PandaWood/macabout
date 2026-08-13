@@ -169,6 +169,10 @@ def _find_system_icon(distro_id: str, logo_id: str = "") -> str | None:
         "/usr/share/icons/hicolor/48x48/apps",
         "/usr/share/icons/hicolor/scalable/apps",
         "/usr/share/pixmaps",
+        # Some distros drop their logo loose in the icon root rather than in a
+        # theme directory — CachyOS ships /usr/share/icons/cachyos.svg. Last so
+        # that properly themed icons still win.
+        "/usr/share/icons",
     ]
     for name in candidates:
         for d in dirs:
@@ -187,7 +191,14 @@ def _find_bundled_icon(distro_id: str) -> str | None:
 
 def _svg_to_photoimage(path: str, size: int) -> tk.PhotoImage | None:
     import shutil, tempfile
-    render_size = size * 2
+    try:
+        from PIL import Image, ImageTk
+    except ImportError:
+        Image = ImageTk = None
+    # With Pillow we render at 2x and downsample for a crisper result. Without
+    # it, render at the exact size instead — Tk 8.6 reads PNG natively, so an
+    # SVG logo still works on a system with no Pillow installed.
+    render_size = size * 2 if Image else size
     tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
     tmp.close()
     try:
@@ -203,9 +214,11 @@ def _svg_to_photoimage(path: str, size: int) -> tk.PhotoImage | None:
             r = subprocess.run(cmd, capture_output=True, timeout=5)
             if r.returncode != 0:
                 continue
-            from PIL import Image, ImageTk
-            img = Image.open(tmp.name).convert("RGBA").resize((size, size), Image.LANCZOS)
-            return ImageTk.PhotoImage(img)
+            if Image:
+                img = Image.open(tmp.name).convert("RGBA").resize((size, size), Image.LANCZOS)
+                return ImageTk.PhotoImage(img)
+            # PhotoImage reads the file eagerly, so the temp file can go away.
+            return tk.PhotoImage(file=tmp.name)
     except Exception:
         pass
     finally:
