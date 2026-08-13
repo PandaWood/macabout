@@ -70,9 +70,14 @@
 
     <h2>Quick Install</h2>
 
-    <p>Install macabout with one command:</p>
+    <p>Install macabout with one command. It detects your distro and installs the right package &mdash; run it as your normal user, it calls <code>sudo</code> itself where it needs root.</p>
 
-    <pre><code>curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash</code></pre>
+    <pre><code>curl -sSL https://pandawood.github.io/macabout/install.sh | bash</code></pre>
+
+    <p>On Arch, CachyOS, Manjaro or EndeavourOS you can build the package yourself instead:</p>
+
+    <pre><code>curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
+makepkg -si</code></pre>
 
     <h2>What is macabout?</h2>
 
@@ -88,7 +93,7 @@
         <li>Distribution info with icon</li>
     </ul>
 
-    <p><a href="https://github.com/PandaWood/macabout">→ View on GitHub</a> | <a href="https://github.com/PandaWood/macabout/releases">→ Download .deb file manually</a></p>
+    <p><a href="https://github.com/PandaWood/macabout">→ View on GitHub</a> | <a href="https://github.com/PandaWood/macabout/releases">→ Download the .deb or PKGBUILD manually</a></p>
 
 </body>
 </html>
