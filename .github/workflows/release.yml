@@ -11,6 +11,12 @@ jobs:
     permissions:
       contents: write
 
+    # The `secrets` context is not available in a step-level `if`, so surface
+    # it as an env var to let the AUR publish step skip itself until the
+    # secrets are configured.
+    env:
+      AUR_KEY_SET: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -89,7 +95,7 @@ jobs:
             also work.
 
       - name: Publish to the AUR
-        if: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
+        if: ${{ env.AUR_KEY_SET == 'true' }}
         uses: KSXGitHub/github-actions-deploy-aur@v3
         with:
           pkgname: macabout
