@@ -143,6 +143,17 @@ class TestFormatVram:
     def test_6gb(self):
         assert _format_vram(6 * 1024) == "6 GB"
 
+    def test_sysfs_reserved_slice_rounds_up(self):
+        # AMD sysfs reports usable VRAM: an 8 GB Vega 56 reads as 8176 MB
+        assert _format_vram(8176) == "8 GB"
+
+    def test_sysfs_reserved_slice_4gb(self):
+        assert _format_vram(4080) == "4 GB"
+
+    def test_genuinely_fractional_stays_mb(self):
+        # A real 1.5 GB card must not be rounded to "2 GB"
+        assert _format_vram(1536) == "1536 MB"
+
 
 # ---------------------------------------------------------------------------
 # format_graphics

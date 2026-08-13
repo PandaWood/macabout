@@ -86,8 +86,14 @@ def format_memory(total_mb: int, speed_mhz: int | None, type_: str | None) -> st
 
 
 def _format_vram(vram_mb: int) -> str:
-    if vram_mb % 1024 == 0:
-        return f"{vram_mb // 1024} GB"
+    # The AMD sysfs fallback reports *usable* VRAM, which sits just under the
+    # marketing figure because firmware reserves a slice — an 8 GB card reads
+    # as 8176 MB. Snap to the nearest GB when we're within 3% of it, so those
+    # land on the round number macOS would show. Genuinely fractional sizes
+    # (a 1.5 GB card at 1536 MB) stay in MB.
+    gb = round(vram_mb / 1024)
+    if gb and abs(vram_mb - gb * 1024) <= 0.03 * gb * 1024:
+        return f"{gb} GB"
     return f"{vram_mb} MB"
 
 
