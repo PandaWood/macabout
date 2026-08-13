@@ -134,11 +134,11 @@ def get_memory_info() -> dict | None:
         if not shutil.which("dmidecode"):
             raise RuntimeError(
                 "dmidecode is not installed. Memory speed and type cannot be determined.\n"
-                "Install it with:  sudo apt install dmidecode"
+                "Install it with:  sudo apt install dmidecode   (or: sudo pacman -S dmidecode)"
             )
         raise RuntimeError(
             "dmidecode requires root to read memory information.\n"
-            "Install via the .deb package which configures this automatically, "
+            "Install via the .deb or AUR package, which configures this automatically, "
             "or run:  sudo python3 -m macabout"
         )
     info.update(_parse_dmidecode_memory(dmi))

@@ -35,32 +35,75 @@ jobs:
       - name: Build .deb
         run: ./build.sh
 
+      - name: Stamp PKGBUILD with version and source checksum
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TARBALL="${{ github.server_url }}/${{ github.repository }}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          curl -sSL --fail "$TARBALL" -o source.tar.gz
+          SHA="$(sha256sum source.tar.gz | cut -d ' ' -f 1)"
+          rm source.tar.gz
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" arch/PKGBUILD
+          sed -i "s/^sha256sums=.*/sha256sums=('${SHA}')/" arch/PKGBUILD
+          echo "--- arch/PKGBUILD ---"
+          cat arch/PKGBUILD
+
       - name: Upload release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             build/macabout_*_all.deb
+            arch/PKGBUILD
             install.sh
           generate_release_notes: true
           body: |
             ## Quick Install (One-Line)
 
+            Detects your distro and installs the right package. Run it as your
+            normal user — it calls `sudo` itself where it needs to.
+
             ```bash
-            curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash
+            curl -sSL https://pandawood.github.io/macabout/install.sh | bash
             ```
 
             ## Manual Install
+
+            **Debian / Ubuntu / Mint / Zorin**
 
             ```bash
             sudo apt install ./macabout_*.deb
             ```
 
-            **Requires:** `python3-tk`, `pciutils`, `dmidecode`
-            **Recommends:** `python3-pil` (icon resizing)
+            Requires `python3-tk`, `pciutils`, `dmidecode`. Recommends
+            `python3-pil` (icon resizing).
+
+            **Arch / CachyOS / Manjaro / EndeavourOS**
+
+            Using the `PKGBUILD` attached below:
+
+            ```bash
+            makepkg -si
+            ```
+
+            Requires `tk`, `pciutils`, `dmidecode` (pulled in automatically).
+            An AUR package is planned, at which point `paru -S macabout` will
+            also work.
+
+      - name: Publish to the AUR
+        if: ${{ secrets.AUR_SSH_PRIVATE_KEY != '' }}
+        uses: KSXGitHub/github-actions-deploy-aur@v3
+        with:
+          pkgname: macabout
+          pkgbuild: ./arch/PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: ${{ secrets.AUR_EMAIL }}
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ github.ref_name }}"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
 
       - name: Prepare GitHub Pages
         run: |
           cp install.sh docs/install.sh
+          cp arch/PKGBUILD docs/PKGBUILD
           cp -r img docs/
 
       - name: Deploy to GitHub Pages

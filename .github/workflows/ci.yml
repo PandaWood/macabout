@@ -31,6 +31,30 @@ jobs:
           print(f'All .py files OK')
           "
 
+      - name: Validate version is in sync across packaging files
+        run: |
+          python3 -c "
+          import re, sys
+          from macabout import __version__
+
+          def find(path, pattern):
+              m = re.search(pattern, open(path).read(), re.M)
+              return m.group(1) if m else None
+
+          versions = {
+              'macabout/__init__.py': __version__,
+              'debian/DEBIAN/control': find('debian/DEBIAN/control', r'^Version: (.+)\$'),
+              'arch/PKGBUILD': find('arch/PKGBUILD', r'^pkgver=(.+)\$'),
+          }
+          for path, v in versions.items():
+              print(f'  {path}: {v}')
+          if len(set(versions.values())) != 1:
+              print('')
+              print('Error: version mismatch. Update all three files to the same value.')
+              sys.exit(1)
+          print('Versions in sync')
+          "
+
       - name: Validate GPU lookup JSON
         run: |
           python3 -c "

@@ -4,7 +4,53 @@
 
 If you're on a re-purposed Mac and need to see a simple system summary, this makes complete sense.
 
-![macabout on Linux Mint](img/macabout-mint-light.png)
+| Linux Mint | CachyOS |
+|:---:|:---:|
+| ![macabout on Linux Mint](img/macabout-mint-light.png) | ![macabout on CachyOS](img/macabout-cachyos-dark.png) |
+
+## Installing on Linux
+
+### Quick install (one-line)
+
+The same command on every supported distro — it detects which one you're on and installs the right package. Run it as your normal user; it calls `sudo` itself where it needs root.
+
+```bash
+curl -sSL https://pandawood.github.io/macabout/install.sh | bash
+```
+
+On Debian-family distros that fetches the `.deb`; on Arch-family distros it builds the `PKGBUILD`. Both are attached to every [release](https://github.com/PandaWood/macabout/releases).
+
+### Manual install
+
+If you'd rather not pipe a script into your shell, do what it does by hand.
+
+**Debian, Ubuntu, Mint, Zorin** — download the `.deb` from [Releases](https://github.com/PandaWood/macabout/releases):
+
+```bash
+sudo apt install ./macabout_*.deb
+```
+
+**Arch, CachyOS, Manjaro, EndeavourOS** — build the `PKGBUILD`:
+
+```bash
+curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
+makepkg -si
+```
+
+> An AUR package (`paru -S macabout`) is planned.
+
+## Compatibility
+
+macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **packaging** is distro-specific — the one-line installer covers the first two rows:
+
+| Distro family                        | What the installer does                      |
+|--------------------------------------|----------------------------------------------|
+| Debian, Ubuntu, Mint, Zorin…         | Installs the `.deb`                          |
+| Arch, CachyOS, Manjaro, EndeavourOS… | Builds the `PKGBUILD`                        |
+| Fedora, openSUSE, …                  | Not packaged — run from source (see below)   |
+
+Both packages install a sudoers rule so `dmidecode` runs without a password prompt. 
+On other distros you'll need to run macabout with `sudo` to see memory speed/type, the machine model and the serial number.
 
 ## Why?
 I use old Macs with Linux installed and system-info is not presented in the same way; so I found it slightly annoying to understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
@@ -28,32 +74,9 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 
 Memory speed/type, machine model, and serial number require `dmidecode`.
 
-## Installing on Linux
-
-### Quick install (one-line)
-
-```bash
-curl -sSL https://pandawood.github.io/macabout/install.sh | sudo bash
-```
-### Manual install
-
-See the [Releases](https://github.com/PandaWood/macabout/releases) for instructions.
-
-## Compatibility
-
-macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **installer** is distro-specific:
-
-| Distro family                | How to install                               |
-|------------------------------|----------------------------------------------|
-| Debian, Ubuntu, Mint, Zorin… | `.deb` from Releases (see below)             |
-| Fedora, Arch, openSUSE, …    | Run from source (see "Running from source") |
-
-The `.deb` installs a sudoers rule so `dmidecode` runs without a password prompt. 
-On other distros you'll need to run macabout with `sudo` to see memory speed/type and the serial number.
-
 ## Running from source (devs or deviants)
 
-This is also the path for anyone not on a Debian-family distro... Replace the `apt` command with your package manager's equivalent.
+This is also the path for anyone not on a Debian- or Arch-family distro... Replace the `apt` command with your package manager's equivalent.
 
 ```bash
 git clone https://github.com/PandaWood/macabout.git
@@ -87,11 +110,16 @@ make run      # real macOS system calls
 
 The icon is sourced from the running system's own branding, in this order:
 
-1. `LOGO=` field in `/etc/os-release` (explicit XDG icon name — most authoritative)
-2. `distributor-logo` (FreeDesktop standard, present on most distros)
-3. `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
-4. A bundled PNG at `macabout/data/icons/{distro_id}.png` if present
-5. A brand-colored circle with the distro's initial letter (pure tkinter, no extra deps)
+1. A bundled PNG at `macabout/data/icons/{distro_id}.png`, if one ships with macabout
+2. Otherwise the system's own icon, tried by name in this order:
+   - `LOGO=` field in `/etc/os-release` (explicit XDG icon name — most authoritative)
+   - `distributor-logo` (FreeDesktop standard, present on most distros)
+   - `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
+3. A brand-colored circle with the distro's initial letter (pure tkinter, no extra deps)
+
+Each name is looked for under the `hicolor` theme directories, `/usr/share/pixmaps`, and `/usr/share/icons` itself — some distros drop their logo loose in the icon root rather than in a theme directory (CachyOS ships `/usr/share/icons/cachyos.svg`).
+
+SVG logos are rendered by whichever of `rsvg-convert`, ImageMagick's `convert` or `inkscape` is installed. Pillow improves the downscaling quality but is not required.
 
 To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. The `distro_id` matches the `ID=` field in `/etc/os-release`.
 

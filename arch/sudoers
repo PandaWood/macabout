@@ -1,8 +1,10 @@
 # Allow macabout to read hardware info via dmidecode without a password prompt.
 #
+# On Arch dmidecode lives in /usr/bin, not /usr/sbin as on Debian.
+#
 # Restricted to the three exact invocations macabout makes (see _run_dmidecode
 # in macabout/linux_collectors.py). An unrestricted rule would additionally
 # permit `dmidecode --dump-bin FILE`, which writes an arbitrary file as root.
-ALL ALL=(root) NOPASSWD: /usr/sbin/dmidecode -t memory, \
-                         /usr/sbin/dmidecode -s system-product-name, \
-                         /usr/sbin/dmidecode -s system-serial-number
+ALL ALL=(root) NOPASSWD: /usr/bin/dmidecode -t memory, \
+                         /usr/bin/dmidecode -s system-product-name, \
+                         /usr/bin/dmidecode -s system-serial-number
