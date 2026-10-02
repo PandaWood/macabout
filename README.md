@@ -12,17 +12,14 @@ If you're on a re-purposed Mac and need to see a simple system summary, this mak
 
 ### Quick install (one-line)
 
-The same command on every supported distro — it detects which one you're on and installs the right package. Run it as your normal user; it calls `sudo` itself where it needs root.
+For supported distros (Debian/Arch based):
 
 ```bash
 curl -sSL https://pandawood.github.io/macabout/install.sh | bash
 ```
-
-On Debian-family distros that fetches the `.deb`; on Arch-family distros it builds the `PKGBUILD`. Both are attached to every [release](https://github.com/PandaWood/macabout/releases).
-
 ### Manual install
 
-If you'd rather not pipe a script into your shell, do what it does by hand.
+To do it by hand:
 
 **Debian, Ubuntu, Mint, Zorin** — download the `.deb` from [Releases](https://github.com/PandaWood/macabout/releases):
 
