@@ -108,20 +108,16 @@ make run      # real macOS system calls
 
 The icon is fetched from the system's own branding, in this order:
 
-1. A bundled PNG at `macabout/data/icons/{distro_id}.png`, if one ships with macabout
+1. A bundled PNG at `macabout/data/icons/{distro_id}.png`
 2. Otherwise the system's own icon, tried by name in this order:
    - `LOGO=` field in `/etc/os-release` (explicit XDG icon name - most authoritative)
    - `distributor-logo` (FreeDesktop standard, present on most distros)
    - `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
-3. A brand-colored circle with the distro's initial letter (pure tkinter, no extra deps)
-
-Each name is looked for under the `hicolor` theme directories, `/usr/share/pixmaps`, and `/usr/share/icons` itself - some distros drop their logo loose in the icon root rather than in a theme directory (CachyOS ships `/usr/share/icons/cachyos.svg`).
-
-SVG logos are rendered by whichever of `rsvg-convert`, ImageMagick's `convert` or `inkscape` is installed. Pillow improves the downscaling quality but is not required.
+3. A brand-colored circle with the distro's initial letter
 
 To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. The `distro_id` matches the `ID=` field in `/etc/os-release`.
 
-## GPU lookup table
+## Graphics card lookup table
 
-Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
-The file ships with ~60 entries covering a bunch of known ones plus a handful of common AMD and NVIDIA cards. On Linux, VRAM is also read from the AMD sysfs interface as a fallback for cards not in the lookup. You can add entries to extend coverage without touching code.
+Graphics card names are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
+Add entries to this to extend coverage without touching code.
