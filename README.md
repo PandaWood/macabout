@@ -12,16 +12,17 @@ If you're on a re-purposed Mac and need to see a simple system summary, this mak
 
 ### Quick install (one-line)
 
-For supported distros (Debian/Arch based):
+This detects & installs the package for the running distro (debian or arch based)
 
 ```bash
 curl -sSL https://pandawood.github.io/macabout/install.sh | bash
 ```
+
+On Debian it fetches the `.deb`; on Arch-family distros it builds the `PKGBUILD`.
+
 ### Manual install
 
-To do it by hand:
-
-**Debian, Ubuntu, Mint, Zorin** — download the `.deb` from [Releases](https://github.com/PandaWood/macabout/releases):
+**Debian, Ubuntu, Mint, Zorin** - download the `.deb` from [Releases](https://github.com/PandaWood/macabout/releases):
 
 ```bash
 sudo apt install ./macabout_*.deb
@@ -34,7 +35,7 @@ curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
 makepkg -si
 ```
 
-> An AUR package (`paru -S macabout`) is planned.
+> An AUR package (`paru -S macabout`) is planned. New accounts were banned at the time of writing...
 
 ## Compatibility
 
@@ -73,7 +74,7 @@ Memory speed/type, machine model, and serial number require `dmidecode`.
 
 ## Running from source (devs or deviants)
 
-This is also the path for anyone not on a Debian- or Arch-family distro... Replace the `apt` command with your package manager's equivalent.
+This is also the path for anyone not on a Debian or Arch distro... Replace `apt` command with your package manager's equivalent.
 
 ```bash
 git clone https://github.com/PandaWood/macabout.git
@@ -87,8 +88,8 @@ sudo python3 -m macabout
 
 ## Developing on macOS
 
-If you don't have a linux machine nearby and you're desperate to work on it...
-**tkinter** ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
+If you're on MacOS and don't have a linux machine nearby and desperate to work on it...
+You'll just need to install **tkinter** because it ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
 
 ```bash
 brew install python@3.14
@@ -105,16 +106,16 @@ make run      # real macOS system calls
 
 ## Distro icon
 
-The icon is sourced from the running system's own branding, in this order:
+The icon is fetched from the system's own branding, in this order:
 
 1. A bundled PNG at `macabout/data/icons/{distro_id}.png`, if one ships with macabout
 2. Otherwise the system's own icon, tried by name in this order:
-   - `LOGO=` field in `/etc/os-release` (explicit XDG icon name — most authoritative)
+   - `LOGO=` field in `/etc/os-release` (explicit XDG icon name - most authoritative)
    - `distributor-logo` (FreeDesktop standard, present on most distros)
    - `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
 3. A brand-colored circle with the distro's initial letter (pure tkinter, no extra deps)
 
-Each name is looked for under the `hicolor` theme directories, `/usr/share/pixmaps`, and `/usr/share/icons` itself — some distros drop their logo loose in the icon root rather than in a theme directory (CachyOS ships `/usr/share/icons/cachyos.svg`).
+Each name is looked for under the `hicolor` theme directories, `/usr/share/pixmaps`, and `/usr/share/icons` itself - some distros drop their logo loose in the icon root rather than in a theme directory (CachyOS ships `/usr/share/icons/cachyos.svg`).
 
 SVG logos are rendered by whichever of `rsvg-convert`, ImageMagick's `convert` or `inkscape` is installed. Pillow improves the downscaling quality but is not required.
 
@@ -122,5 +123,5 @@ To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200
 
 ## GPU lookup table
 
-Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (e.g. `"8086:0a26"`). 
-The file ships with ~60 entries covering Intel HD/Iris/UHD Graphics from Sandy Bridge through Coffee Lake, plus a handful of common AMD and NVIDIA cards. On Linux, VRAM is also read from the AMD sysfs interface as a fallback for cards not in the lookup. Add entries to extend coverage without touching code.
+Graphics card names and VRAM figures (displayed in GB) are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
+The file ships with ~60 entries covering a bunch of known ones plus a handful of common AMD and NVIDIA cards. On Linux, VRAM is also read from the AMD sysfs interface as a fallback for cards not in the lookup. You can add entries to extend coverage without touching code.
