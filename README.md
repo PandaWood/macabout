@@ -28,7 +28,7 @@ On Debian it fetches the `.deb`; on Arch-family distros it builds the `PKGBUILD`
 sudo apt install ./macabout_*.deb
 ```
 
-**Arch, CachyOS, Manjaro, EndeavourOS** — build the `PKGBUILD`:
+**Arch, CachyOS, Manjaro, EndeavourOS** - build the `PKGBUILD`:
 
 ```bash
 curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
@@ -45,7 +45,7 @@ macabout reads system information from standard Linux interfaces and therefore w
 |--------------------------------------|----------------------------------------------|
 | Debian, Ubuntu, Mint, Zorin…         | Installs the `.deb`                          |
 | Arch, CachyOS, Manjaro, EndeavourOS… | Builds the `PKGBUILD`                        |
-| Fedora, openSUSE, …                  | Not packaged — run from source (see below)   |
+| Fedora, openSUSE, …                  | Not packaged - run from source (see below)   |
 
 Both packages install a sudoers rule so `dmidecode` runs without a password prompt. 
 On other distros you'll need to run macabout with `sudo` to see memory speed/type, the machine model and the serial number.
@@ -64,7 +64,7 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 | Machine model | `dmidecode -s system-product-name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
 | Processor model | `/proc/cpuinfo` (`model name`), cleaned up by family | Intel Xeon W |
 | Processor speed | `/proc/cpuinfo` (`@ X.Y GHz` in model name) | 3.2 GHz |
-| Core count | `/proc/cpuinfo` — unique `(physical id, core id)` pairs | 8-Core |
+| Core count | `/proc/cpuinfo` - unique `(physical id, core id)` pairs | 8-Core |
 | Memory size | `/proc/meminfo` (`MemTotal`), nearest GB | 8 GB |
 | Memory speed/type | `dmidecode -t memory` | 1600 MHz DDR3 |
 | Graphics | `lspci -nn` PCI ID → bundled `gpu_lookup.json`; falls back to parsed `lspci` name + AMD sysfs VRAM | Radeon Pro Vega 56 8 GB |
@@ -106,7 +106,7 @@ make run      # real macOS system calls
 
 ## Distro icon
 
-The icon is fetched from the system's own branding, in this order:
+The icon is fetched from the system's own branding, which varies, so we came up with these checks, in this order:
 
 1. A bundled PNG at `macabout/data/icons/{distro_id}.png`
 2. Otherwise the system's own icon, tried by name in this order:
@@ -115,9 +115,8 @@ The icon is fetched from the system's own branding, in this order:
    - `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
 3. A brand-colored circle with the distro's initial letter
 
-To add a bundled icon for a distro, drop a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. The `distro_id` matches the `ID=` field in `/etc/os-release`.
+To add an icon for a distro, put a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. 
 
 ## Graphics card lookup table
 
 Graphics card names are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
-Add entries to this to extend coverage without touching code.
