@@ -39,7 +39,7 @@ makepkg -si
 
 ## Compatibility
 
-macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **packaging** is distro-specific — the one-line installer covers the first two rows:
+macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **packaging** is distro-specific:
 
 | Distro family                        | What the installer does                      |
 |--------------------------------------|----------------------------------------------|
