@@ -18,24 +18,9 @@ This detects & installs the package for the running distro (debian or arch based
 curl -sSL https://pandawood.github.io/macabout/install.sh | bash
 ```
 
-On Debian it fetches the `.deb`; on Arch-family distros it builds the `PKGBUILD`.
+On Debian (eg Ubuntu/Mint) it fetches the `.deb` and on Arch distros (eg CachyOS/Omarchy) it builds the `PKGBUILD`.
 
-### Manual install
-
-**Debian, Ubuntu, Mint, Zorin** - download the `.deb` from [Releases](https://github.com/PandaWood/macabout/releases):
-
-```bash
-sudo apt install ./macabout_*.deb
-```
-
-**Arch, CachyOS, Manjaro, EndeavourOS** - build the `PKGBUILD`:
-
-```bash
-curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
-makepkg -si
-```
-
-> An AUR package (`paru -S macabout`) is planned. New accounts were banned at the time of writing...
+> An AUR package (`paru -S macabout`) was planned... but new accounts were banned at the time of writing...
 
 ## Compatibility
 
@@ -119,4 +104,4 @@ To add an icon for a distro, put a PNG named `{distro_id}.png` (200×200px) into
 
 ## Graphics card lookup table
 
-Graphics card names are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`). 
+Graphics card names are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`).
