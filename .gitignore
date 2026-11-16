@@ -5,3 +5,6 @@ __pycache__/
 build/
 *.deb
 .DS_Store
+
+# local preview of docs/index.html; the release workflow copies the real files in
+docs/img

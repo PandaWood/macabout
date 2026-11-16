@@ -1,0 +1,262 @@
+/* The page borrows the layout of the window it describes: the window's
+   own grey as the background, the Mac's typeface, and grey
+   right-aligned labels beside their values. */
+:root {
+    --window: #ececec;
+    --well: #ffffff;
+    --ink: #1d1d1f;
+    --label: #68686d;
+    --rule: #d0d0d0;
+    --link: #0b5fcc;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.12), 0 18px 40px -12px rgba(0, 0, 0, 0.35);
+    --label-col: 8.5rem;
+    --gap: 1.5rem;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --window: #222222;
+        --well: #141414;
+        --ink: #f2f2f2;
+        --label: #9c9ca1;
+        --rule: #3a3a3a;
+        --link: #74b3ff;
+        --shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px -12px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Macs get their own San Francisco; everyone else gets Inter, the closest
+   freely licensed match (SIL Open Font License), served from this folder. */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(inter-latin.woff2) format('woff2');
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Sizes are all in rem, so growing the root size scales the whole
+   layout on wide screens while line lengths stay the same. */
+html {
+    -webkit-text-size-adjust: 100%;
+    font-size: clamp(1rem, 0.8125rem + 0.25vw, 1.1875rem);
+}
+
+body {
+    margin: 0;
+    padding: clamp(2.5rem, 8vw, 6rem) 1.25rem 4rem;
+    background: var(--window);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+main {
+    max-width: 58rem;
+    margin: 0 auto;
+}
+
+a {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+}
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+code, pre {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Ubuntu Mono', Menlo, Consolas, monospace;
+    font-size: 0.9em;
+}
+
+code { white-space: nowrap; }
+
+/* Everything hangs off one vertical line, the way the window sets its
+   values against its labels. */
+.intro,
+.specs {
+    display: grid;
+    grid-template-columns: var(--label-col) minmax(0, 1fr);
+    column-gap: var(--gap);
+}
+
+.intro > * {
+    grid-column: 2;
+    max-width: 36rem;
+}
+
+/* Sits where the window puts the distro icon: left of the title. */
+.intro .logo {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    justify-self: end;
+    width: 6.5rem;
+    margin-top: 0.35rem;
+}
+.logo-rows { stroke: var(--label); }
+
+h1 {
+    margin: 0;
+    font-size: clamp(2.75rem, 9vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.version {
+    margin: 0.75rem 0 0;
+    font-size: 1.375rem;
+    color: var(--label);
+}
+
+.lede {
+    margin: 1.5rem 0 0;
+}
+
+.specs {
+    margin: 1.75rem 0 0;
+    row-gap: 1.75rem;
+}
+
+.specs dt {
+    color: var(--label);
+    text-align: right;
+}
+
+.specs dd {
+    margin: 0;
+    max-width: 36rem;
+}
+
+.specs dd p { margin: 0; }
+.specs dd p + p { margin-top: 0.6rem; }
+
+.specs .wide { max-width: none; }
+.specs .wide p { max-width: 36rem; }
+
+.note { color: var(--label); }
+
+.command {
+    display: flex;
+    align-items: stretch;
+    max-width: 44rem;
+    margin-bottom: 0.9rem;
+    background: var(--well);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+}
+
+.command pre {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    overflow-x: auto;
+    white-space: pre;
+}
+
+.command button {
+    flex: none;
+    min-width: 5.25rem;
+    padding: 0 1rem;
+    border: 0;
+    border-left: 1px solid var(--rule);
+    border-radius: 0 7px 7px 0;
+    background: transparent;
+    color: var(--link);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.command button:hover { background: color-mix(in srgb, var(--link) 10%, transparent); }
+
+.windows {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    margin: 4rem 0;
+}
+
+/* Grow in proportion to each screenshot's aspect ratio so the two
+   windows come out the same height. */
+.windows figure { margin: 0; min-width: 0; }
+.windows .mint { flex: 1.761 1 0; }
+.windows .cachy { flex: 1.872 1 0; }
+
+.windows img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.windows figcaption {
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    color: var(--label);
+}
+
+.reads {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.reads th,
+.reads td {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: baseline;
+    font-weight: 400;
+}
+
+.reads tr:first-child th,
+.reads tr:first-child td { padding-top: 0; }
+
+.reads th {
+    width: 11rem;
+    padding-right: 1rem;
+}
+
+.reads td { color: var(--label); }
+
+@media (max-width: 44rem) {
+    .intro,
+    .specs { display: block; }
+
+    .intro .logo {
+        display: block;
+        width: 4rem;
+        margin: 0 0 1.25rem;
+    }
+
+    .specs dt {
+        margin-top: 1.75rem;
+        margin-bottom: 0.35rem;
+        text-align: left;
+    }
+
+    .command pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+    .command code { white-space: inherit; }
+
+    .windows {
+        flex-direction: column;
+        gap: 2.5rem;
+        margin: 3rem 0;
+    }
+    .windows figure { flex: none; width: 100%; }
+
+    .reads th { width: 8.5rem; }
+}
