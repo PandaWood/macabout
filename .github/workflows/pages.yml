@@ -1,0 +1,41 @@
+name: Pages
+
+# Redeploys the landing page and install.sh when they change on main, so an
+# edit to either doesn't need a release. The PKGBUILD on the site is left as
+# the last release published it.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/**"
+      - "img/**"
+      - "install.sh"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare GitHub Pages
+        run: |
+          cp install.sh docs/install.sh
+          cp -r img docs/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          # Keep the stamped PKGBUILD from the last release.
+          keep_files: true
