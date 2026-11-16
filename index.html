@@ -3,97 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>macabout - Mac-style Linux system info</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            line-height: 1.6;
-            color: #333;
-        }
-        h1 { color: #2c3e50; }
-        h2 { color: #34495e; margin-top: 30px; }
-        code {
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
-        pre {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        .hero {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        .hero h1, .hero p { position: relative; z-index: 1; }
-        .hero h1 { color: white; margin: 0; }
-        .hero p { font-size: 1.2em; margin: 10px 0 0 0; opacity: 0.95; }
-        a { color: #3498db; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .screenshot {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin: 20px 0;
-        }
-    </style>
+    <title>macabout: About This Mac, for Linux</title>
+    <meta name="description" content="macabout shows your Linux machine's hardware the way macOS does in About This Mac. One-line install for Debian-based and Arch-based distros.">
+    <meta name="color-scheme" content="light dark">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -8 104 104' fill='none' stroke='%23888' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='4' width='88' height='62' rx='7'/%3E%3Cpath d='M4 52h88M41 66l-3 16M55 66l3 16M29 83h38'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="hero">
+<main>
+    <header class="intro">
+        <svg class="logo" viewBox="0 0 96 88" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <g stroke="currentColor" stroke-width="3">
+                <rect x="4" y="4" width="88" height="62" rx="7"/>
+                <path d="M4 52h88"/>
+                <path d="M41 66l-3 16M55 66l3 16M29 83h38"/>
+            </g>
+            <g class="logo-rows" stroke-width="3">
+                <path d="M30 18h10M24 28h16M27 38h13"/>
+                <path d="M48 18h26M48 28h18M48 38h22" stroke="currentColor"/>
+            </g>
+        </svg>
         <h1>macabout</h1>
-        <p>Mac-style system information for Linux</p>
+        <p class="version">About This Mac, for Linux</p>
+        <p class="lede">macabout shows your Linux system-info the way macOS does... specifically catering for re-purposed Macs.</p>
+    </header>
+
+    <dl class="specs">
+        <dt>Install</dt>
+        <dd class="wide">
+            <div class="command">
+                <pre><code id="install-command">curl -sSL https://pandawood.github.io/macabout/install.sh | bash</code></pre>
+                <button type="button" id="copy-command">Copy</button>
+            </div>
+            <p>The installer works on Arch-based distros as well as Debian/Ubuntu. It checks which you're running and installs the package.</p>
+            <p class="note">Run as your normal user, without <code>sudo</code>. macabout will ask for a password when it needs root.</p>
+        </dd>
+
+        <dt>Debian family</dt>
+        <dd>Debian, Ubuntu, Mint, Zorin and their relatives. Downloads the latest <code>.deb</code> and installs it along with its dependencies.</dd>
+
+        <dt>Arch family</dt>
+        <dd>Arch, CachyOS, Manjaro, EndeavourOS and their relatives. Installs <code>base-devel</code> if it's missing, then builds and installs the package from the latest <code>PKGBUILD</code> with <code>makepkg</code>.</dd>
+
+        <dt>Other distros</dt>
+        <dd>Fedora, openSUSE and the rest aren't packaged yet. macabout still runs on them: <a href="https://github.com/PandaWood/macabout#running-from-source-devs-or-deviants">run it from source</a>.</dd>
+    </dl>
+
+    <div class="windows">
+        <figure class="mint">
+            <img src="img/macabout-mint-light.png" width="671" height="381" alt="macabout window on Linux Mint 22.3: MacBookPro9,2, 2.5 GHz Dual-Core Intel Core i5, 8 GB 1600 MHz DDR3, Intel HD Graphics 4000.">
+            <figcaption>Linux Mint on a 2012 MacBook Pro</figcaption>
+        </figure>
+        <figure class="cachy">
+            <img src="img/macabout-cachyos-dark.png" width="904" height="483" alt="macabout window on CachyOS: iMacPro1,1, 3.2 GHz 8-Core Intel Xeon W-2140B, 32 GB 2666 MHz DDR4, Radeon Pro Vega 56 8 GB.">
+            <figcaption>CachyOS on an iMac Pro</figcaption>
+        </figure>
     </div>
 
-    <h2>Quick Install</h2>
+    <dl class="specs">
+        <dt>What it reads</dt>
+        <dd>
+            <table class="reads">
+                <tr><th scope="row">Distro and version</th><td><code>/etc/os-release</code></td></tr>
+                <tr><th scope="row">Machine model</th><td><code>dmidecode</code></td></tr>
+                <tr><th scope="row">Processor</th><td><code>/proc/cpuinfo</code></td></tr>
+                <tr><th scope="row">Memory</th><td><code>/proc/meminfo</code>, and <code>dmidecode</code> for speed and type</td></tr>
+                <tr><th scope="row">Graphics</th><td><code>lspci</code>, matched against a bundled table of cards</td></tr>
+                <tr><th scope="row">Serial number</th><td><code>dmidecode</code></td></tr>
+            </table>
+        </dd>
 
-    <p>Install macabout with one command. It detects your distro and installs the right package &mdash; run it as your normal user, it calls <code>sudo</code> itself where it needs root.</p>
+        <dt>Permissions</dt>
+        <dd><code>dmidecode</code> needs root. Both packages add a sudoers rule for it, so macabout opens without a password prompt.</dd>
 
-    <pre><code>curl -sSL https://pandawood.github.io/macabout/install.sh | bash</code></pre>
+        <dt>Source</dt>
+        <dd><a href="https://github.com/PandaWood/macabout">PandaWood/macabout on GitHub</a>. To install by hand, the <code>.deb</code> and <code>PKGBUILD</code> are attached to <a href="https://github.com/PandaWood/macabout/releases/latest">the latest release</a>.</dd>
+    </dl>
+</main>
 
-    <p>On Arch, CachyOS, Manjaro or EndeavourOS you can build the package yourself instead:</p>
-
-    <pre><code>curl -sSLO https://pandawood.github.io/macabout/PKGBUILD
-makepkg -si</code></pre>
-
-    <h2>What is macabout?</h2>
-
-    <p><strong>macabout</strong> presents your Linux machine's hardware in the same format as macOS (via "About this Mac..."). Perfect for comparing specs on repurposed Mac hardware.</p>
-
-    <img src="img/mint-screenshot.png" alt="macabout on Linux Mint" class="screenshot">
-
-    <ul>
-        <li>Shows CPU model, speed, and core count</li>
-        <li>Memory size, speed, and type</li>
-        <li>Graphics card with VRAM</li>
-        <li>Serial number</li>
-        <li>Distribution info with icon</li>
-    </ul>
-
-    <p><a href="https://github.com/PandaWood/macabout">→ View on GitHub</a> | <a href="https://github.com/PandaWood/macabout/releases">→ Download the .deb or PKGBUILD manually</a></p>
-
+<script>
+    (function () {
+        var button = document.getElementById('copy-command');
+        var command = document.getElementById('install-command');
+        if (!navigator.clipboard) {
+            button.hidden = true;
+            return;
+        }
+        button.addEventListener('click', function () {
+            navigator.clipboard.writeText(command.textContent).then(function () {
+                button.textContent = 'Copied';
+                setTimeout(function () { button.textContent = 'Copy'; }, 2000);
+            });
+        });
+    })();
+</script>
 </body>
 </html>

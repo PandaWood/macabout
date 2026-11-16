@@ -115,6 +115,7 @@ curl -sSL https://pandawood.github.io/macabout/install.sh | bash
 - `arch/PKGBUILD` - AUR package recipe (committed to repo, stamped at release)
 - `docs/index.html` - Landing page (committed to repo)
 - `.github/workflows/release.yml` - Builds, publishes to the AUR, deploys to GitHub Pages
+- `.github/workflows/pages.yml` - Redeploys the landing page and `install.sh` when they change on main, without a release
 
 ## Benefits vs APT Repository
 
