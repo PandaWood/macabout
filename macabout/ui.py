@@ -20,7 +20,24 @@ _LIGHT = _Palette(bg="#ECECEC", fg="#1A1A1A", subtle="#4D4D4D", ver="#AAAAAA")
 _DARK  = _Palette(bg="#242424", fg="#F2F2F2", subtle="#AAAAAA", ver="#666666")
 
 
-def _detect_dark_mode() -> bool:
+def _gtk_setting(text: str, key: str) -> str | None:
+    """A key's value in the [Settings] group of a GTK settings.ini, a GLib key file: '#'
+    comments, key=value lines, group and key names case-sensitive, the last of a repeated key
+    winning. Unlike configparser, never raises on a file GTK itself accepts."""
+    in_settings = False
+    value = None
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("["):
+            in_settings = line == "[Settings]"
+        elif in_settings and "=" in line:
+            k, v = line.split("=", 1)
+            if k.rstrip() == key:
+                value = v.lstrip()
+    return value
+
+
+def detect_dark_mode() -> bool:
     import subprocess, os
     if platform.system() == "Linux":
         # When running under sudo, gsettings/dconf need the real user's D-Bus session
@@ -56,17 +73,16 @@ def _detect_dark_mode() -> bool:
             return True
 
         # 3. GTK settings files (use real user's home, not /root)
-        from configparser import ConfigParser
         for settings_path in (
             real_home / ".config" / "gtk-4.0" / "settings.ini",
             real_home / ".config" / "gtk-3.0" / "settings.ini",
         ):
-            if settings_path.exists():
-                cfg = ConfigParser()
-                cfg.read(settings_path)
-                val = cfg.get("Settings", "gtk-application-prefer-dark-theme", fallback="0")
-                if val.strip() in ("1", "true", "True"):
-                    return True
+            try:
+                text = settings_path.read_text(errors="replace")
+            except OSError:
+                continue
+            if _gtk_setting(text, "gtk-application-prefer-dark-theme") in ("1", "true"):
+                return True
 
         # 4. dconf direct read (via CLI)
         if "dark" in _run(["dconf", "read", "/org/gnome/desktop/interface/color-scheme"]).lower():
@@ -294,10 +310,14 @@ _SPEC_ROWS: tuple[tuple[str, str], ...] = (
 )
 
 
+def _version_text(display: dict) -> str:
+    return f"Version {display['os_version']}" if display["os_version"] else ""
+
+
 def _build_copy_text(display: dict) -> str:
     header = [display["os_name"]]
     if display["os_version"]:
-        header.append(f"Version {display['os_version']}")
+        header.append(_version_text(display))
     if display.get("model"):
         header.append(display["model"])
     rows = [(label, display[key]) for label, key in _SPEC_ROWS]
@@ -306,8 +326,8 @@ def _build_copy_text(display: dict) -> str:
     return "\n".join(header + [""] + body)
 
 
-def show_dialog(display: dict) -> None:
-    palette = _DARK if _detect_dark_mode() else _LIGHT
+def show_dialog(display: dict, dark: bool) -> None:
+    palette = _DARK if dark else _LIGHT
     BG_COLOR = palette.bg
     FG_COLOR = palette.fg
     SUBTLE_FG = palette.subtle
@@ -345,10 +365,9 @@ def show_dialog(display: dict) -> None:
         justify="left",
     ).pack(anchor="w", pady=(20, 4))
 
-    version_text = f"Version {display['os_version']}" if display["os_version"] else ""
     tk.Label(
         right,
-        text=version_text,
+        text=_version_text(display),
         font=(family, 12),
         bg=BG_COLOR,
         fg=SUBTLE_FG,

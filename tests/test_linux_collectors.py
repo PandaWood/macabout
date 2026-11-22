@@ -5,6 +5,7 @@ import textwrap
 
 from macabout.linux_collectors import (
     _parse_dmidecode_memory,
+    _parse_lscpu_model,
     _parse_lspci_vga,
     _parse_meminfo_total_mb,
     _parse_os_release,
@@ -220,3 +221,39 @@ class TestParseLspciVga:
         result = _parse_lspci_vga(line)
         assert result is not None
         assert result["pci_id"] == "10de:1f9d"
+
+    def test_slot(self):
+        assert _parse_lspci_vga(_LSPCI_NVIDIA)["slot"] == "01:00.0"
+        domain = "0001:00:00.0 VGA compatible controller [0300]: Intel Corporation Device [8086:46a6]\n"
+        assert _parse_lspci_vga(domain)["slot"] == "0001:00:00.0"
+
+
+# ---------------------------------------------------------------------------
+# _parse_lscpu_model (ARM, where /proc/cpuinfo has no model name)
+# ---------------------------------------------------------------------------
+
+class TestParseLscpuModel:
+    def test_raspberry_pi_4(self):
+        output = textwrap.dedent("""\
+            Architecture:            aarch64
+            CPU(s):                  4
+            Vendor ID:               ARM
+            Model name:              Cortex-A72
+            Model:                   3
+        """)
+        assert _parse_lscpu_model(output) == "ARM Cortex-A72"
+
+    def test_big_little(self):
+        output = textwrap.dedent("""\
+            Vendor ID:               ARM
+              Model name:            Cortex-A55
+                Model:               0
+              Model name:            Cortex-A76
+        """)
+        assert _parse_lscpu_model(output) == "ARM Cortex-A55 + Cortex-A76"
+
+    def test_unknown_part(self):
+        assert _parse_lscpu_model("Vendor ID: ARM\nModel name: -\n") is None
+
+    def test_empty(self):
+        assert _parse_lscpu_model("") is None

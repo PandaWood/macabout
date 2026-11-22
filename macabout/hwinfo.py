@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 from . import linux_collectors, mac_collectors, mock_data
@@ -35,23 +36,36 @@ def collect_system_info(force_mock: bool = False) -> SystemInfo:
     else:
         backend = mock_data
 
-    os_info = backend.get_os_info() or {}
-    mem = backend.get_memory_info() or {}
-    gpu = backend.get_graphics_info() or {}
+    getters = {
+        "os": backend.get_os_info,
+        "mem": backend.get_memory_info,
+        "gpu": backend.get_graphics_info,
+        "cpu": backend.get_processor_raw,
+        "cores": backend.get_cpu_core_count,
+        "serial": backend.get_serial_number,
+        "model": backend.get_machine_model,
+    }
+    # Most of these run a command; side by side, the window opens sooner.
+    with ThreadPoolExecutor() as pool:
+        futures = {key: pool.submit(get) for key, get in getters.items()}
+    got = {key: future.result() for key, future in futures.items()}
+    os_info = got["os"] or {}
+    mem = got["mem"] or {}
+    gpu = got["gpu"] or {}
 
     return SystemInfo(
         os_name=os_info.get("name") or "Linux",
         os_version=os_info.get("version") or "",
         distro_id=os_info.get("id") or "linux",
         logo_id=os_info.get("logo") or "",
-        cpu_raw=backend.get_processor_raw() or "",
-        cpu_cores=backend.get_cpu_core_count(),
+        cpu_raw=got["cpu"] or "",
+        cpu_cores=got["cores"],
         mem_total_mb=mem.get("total_mb") or 0,
         mem_speed_mhz=mem.get("speed_mhz"),
         mem_type=mem.get("type"),
         gpu_raw=gpu.get("raw") or "",
         gpu_pci_id=gpu.get("pci_id"),
         gpu_vram_mb=gpu.get("vram_mb"),
-        serial=backend.get_serial_number(),
-        machine_model=backend.get_machine_model(),
+        serial=got["serial"],
+        machine_model=got["model"],
     )
