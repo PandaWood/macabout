@@ -6,7 +6,7 @@ If you're on a re-purposed Mac and need to see a simple system summary, this mak
 
 | Kubuntu | CachyOS |
 |:---:|:---:|
-| ![macabout on Kubuntu](img/macabout-kubuntu-dark.png) | ![macabout on CachyOS](img/macabout-cachyos-dark.png) |
+| <img src="img/macabout-kubuntu-dark.png" width="400" alt="macabout on Kubuntu"> | <img src="img/macabout-cachyos-dark.png" width="400" alt="macabout on CachyOS"> |
 
 ## Installing on Linux
 

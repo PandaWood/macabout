@@ -188,7 +188,7 @@ h1 {
 /* Grow in proportion to each screenshot's aspect ratio so the two
    windows come out the same height. */
 .windows figure { margin: 0; min-width: 0; }
-.windows .kubuntu { flex: 1.617 1 0; }
+.windows .kubuntu { flex: 1.838 1 0; }
 .windows .cachy { flex: 1.891 1 0; }
 
 .windows img {
