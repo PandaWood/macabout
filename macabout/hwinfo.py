@@ -21,7 +21,6 @@ class SystemInfo:
     gpu_raw: str
     gpu_pci_id: str | None
     gpu_vram_mb: int | None
-    serial: str | None
     machine_model: str | None
 
 
@@ -42,7 +41,6 @@ def collect_system_info(force_mock: bool = False) -> SystemInfo:
         "gpu": backend.get_graphics_info,
         "cpu": backend.get_processor_raw,
         "cores": backend.get_cpu_core_count,
-        "serial": backend.get_serial_number,
         "model": backend.get_machine_model,
     }
     # Most of these run a command; side by side, the window opens sooner.
@@ -66,6 +64,5 @@ def collect_system_info(force_mock: bool = False) -> SystemInfo:
         gpu_raw=gpu.get("raw") or "",
         gpu_pci_id=gpu.get("pci_id"),
         gpu_vram_mb=gpu.get("vram_mb"),
-        serial=got["serial"],
         machine_model=got["model"],
     )

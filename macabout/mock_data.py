@@ -24,9 +24,5 @@ def get_graphics_info() -> dict:
     }
 
 
-def get_serial_number() -> str:
-    return "C02J1234XYZA"
-
-
 def get_machine_model() -> str:
     return "MacBook Air (13-inch, Mid 2013)"

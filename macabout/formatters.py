@@ -136,5 +136,4 @@ def format_all(info: SystemInfo) -> dict:
         "processor": format_processor(info.cpu_raw, info.cpu_cores),
         "memory": format_memory(info.mem_total_mb, info.mem_speed_mhz, info.mem_type),
         "graphics": format_graphics(info.gpu_raw, info.gpu_pci_id, info.gpu_vram_mb),
-        "serial": info.serial or "N/A",
     }

@@ -16,15 +16,6 @@ def _run(cmd: list[str], env: dict | None = None) -> str | None:
     return r.stdout
 
 
-def _run_dmidecode(args: list[str]) -> str | None:
-    # sudo -n uses the sudoers rule installed by the .deb (no password prompt)
-    out = _run(["sudo", "-n", "dmidecode"] + args)
-    if out is not None:
-        return out
-    # Direct fallback — works if user already has root or binary has capabilities
-    return _run(["dmidecode"] + args)
-
-
 def _parse_os_release(content: str) -> dict:
     out: dict = {}
     for line in content.splitlines():
@@ -122,24 +113,26 @@ def _parse_meminfo_total_mb(content: str) -> int | None:
     return None
 
 
-def _parse_dmidecode_memory(output: str) -> dict:
-    for block in output.split("\n\n"):
-        if "Memory Device" not in block:
+def _parse_udev_memory(output: str) -> dict:
+    """Type and speed of the first populated slot, from the MEMORY_DEVICE_<n>_* properties udev
+    reads from the firmware's memory table at boot (systemd 248 and later)."""
+    slots: dict[int, dict[str, str]] = {}
+    for line in output.splitlines():
+        key, _, value = line.partition("=")
+        m = re.fullmatch(r"MEMORY_DEVICE_(\d+)_(\w+)", key)
+        if m:
+            slots.setdefault(int(m.group(1)), {})[m.group(2)] = value.strip()
+    for _, slot in sorted(slots.items()):
+        size = slot.get("SIZE", "")
+        if not size.isdigit() or int(size) == 0:
             continue
-        size_m = re.search(r"^\s*Size:\s*(.+)$", block, re.MULTILINE)
-        if not size_m:
-            continue
-        size_val = size_m.group(1).strip()
-        if "No Module" in size_val or size_val == "0 MB" or size_val.lower() == "unknown":
-            continue
-        type_m = re.search(r"^\s*Type:\s+(\S+)", block, re.MULTILINE)
-        speed_m = re.search(r"^\s*Speed:\s+(\d+)\s*M(?:T/s|Hz)", block, re.MULTILINE)
-        type_val = type_m.group(1) if type_m else None
-        if type_val in ("Unknown", "None"):
+        type_val = slot.get("TYPE")
+        if type_val in ("", "Unknown", "None"):
             type_val = None
+        speed = slot.get("SPEED_MTS", "")
         return {
             "type": type_val,
-            "speed_mhz": int(speed_m.group(1)) if speed_m else None,
+            "speed_mhz": int(speed) if speed.isdigit() else None,
         }
     return {"type": None, "speed_mhz": None}
 
@@ -153,20 +146,10 @@ def get_memory_info() -> dict | None:
     if total_mb is None:
         return None
     info = {"total_mb": total_mb, "speed_mhz": None, "type": None}
-    dmi = _run_dmidecode(["-t", "memory"])
-    if dmi is None:
-        import shutil
-        if not shutil.which("dmidecode"):
-            raise RuntimeError(
-                "dmidecode is not installed. Memory speed and type cannot be determined.\n"
-                "Install it with:  sudo apt install dmidecode   (or: sudo pacman -S dmidecode)"
-            )
-        raise RuntimeError(
-            "dmidecode requires root to read memory information.\n"
-            "Install via the .deb or AUR package, which configures this automatically, "
-            "or run:  sudo python3 -m macabout"
-        )
-    info.update(_parse_dmidecode_memory(dmi))
+    # Readable by any user, unlike dmidecode, which needs root.
+    out = _run(["udevadm", "info", "--query=property", "--path=/devices/virtual/dmi/id"])
+    if out:
+        info.update(_parse_udev_memory(out))
     return info
 
 
@@ -238,22 +221,16 @@ _DMI_PLACEHOLDERS = frozenset({
 })
 
 
-def _dmi_string(dmi_type: str, extra_placeholder: str = "") -> str | None:
-    out = _run_dmidecode(["-s", dmi_type])
-    if not out:
+def _dmi_string(name: str, extra_placeholder: str = "") -> str | None:
+    """A value from the firmware's DMI table, as the kernel shows it to any user."""
+    try:
+        value = Path(f"/sys/class/dmi/id/{name}").read_text().strip()
+    except OSError:
         return None
-    lines = [ln.strip() for ln in out.strip().splitlines() if ln.strip() and not ln.startswith("#")]
-    if not lines:
-        return None
-    value = lines[-1]
     placeholders = _DMI_PLACEHOLDERS | ({extra_placeholder.lower()} if extra_placeholder else set())
     if value.lower() in placeholders:
         return None
     return value
-
-
-def get_serial_number() -> str | None:
-    return _dmi_string("system-serial-number", "system serial number")
 
 
 def _device_tree_model() -> str | None:
@@ -266,4 +243,4 @@ def _device_tree_model() -> str | None:
 
 
 def get_machine_model() -> str | None:
-    return _dmi_string("system-product-name", "system product name") or _device_tree_model()
+    return _dmi_string("product_name", "system product name") or _device_tree_model()

@@ -40,24 +40,11 @@ def _gtk_setting(text: str, key: str) -> str | None:
 def detect_dark_mode() -> bool:
     import subprocess, os
     if platform.system() == "Linux":
-        # When running under sudo, gsettings/dconf need the real user's D-Bus session
-        env = os.environ.copy()
-        real_home = Path.home()
-        sudo_user = os.environ.get("SUDO_USER")
-        if sudo_user:
-            try:
-                import pwd
-                uid = pwd.getpwnam(sudo_user).pw_uid
-                bus = f"/run/user/{uid}/bus"
-                if Path(bus).exists():
-                    env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
-                real_home = Path(f"/home/{sudo_user}")
-            except Exception:
-                pass
+        home = Path.home()
 
         def _run(cmd: list[str]) -> str:
             try:
-                r = subprocess.run(cmd, capture_output=True, text=True, timeout=2, env=env)
+                r = subprocess.run(cmd, capture_output=True, text=True, timeout=2)
                 return r.stdout if r.returncode == 0 else ""
             except Exception:
                 return ""
@@ -72,10 +59,10 @@ def detect_dark_mode() -> bool:
         if "dark" in os.environ.get("GTK_THEME", "").lower():
             return True
 
-        # 3. GTK settings files (use real user's home, not /root)
+        # 3. GTK settings files
         for settings_path in (
-            real_home / ".config" / "gtk-4.0" / "settings.ini",
-            real_home / ".config" / "gtk-3.0" / "settings.ini",
+            home / ".config" / "gtk-4.0" / "settings.ini",
+            home / ".config" / "gtk-3.0" / "settings.ini",
         ):
             try:
                 text = settings_path.read_text(errors="replace")
@@ -88,8 +75,8 @@ def detect_dark_mode() -> bool:
         if "dark" in _run(["dconf", "read", "/org/gnome/desktop/interface/color-scheme"]).lower():
             return True
 
-        # 5. dconf binary database — works under sudo with no D-Bus required
-        dconf_db = real_home / ".config" / "dconf" / "user"
+        # 5. dconf binary database, for when the dconf CLI is missing
+        dconf_db = home / ".config" / "dconf" / "user"
         if dconf_db.exists():
             try:
                 if b"prefer-dark" in dconf_db.read_bytes():
@@ -306,7 +293,6 @@ _SPEC_ROWS: tuple[tuple[str, str], ...] = (
     ("Processor",     "processor"),
     ("Memory",        "memory"),
     ("Graphics",      "graphics"),
-    ("Serial Number", "serial"),
 )
 
 

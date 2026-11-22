@@ -79,8 +79,8 @@ jobs:
             sudo apt install ./macabout_*.deb
             ```
 
-            Requires `python3-tk`, `pciutils`, `dmidecode`. Recommends
-            `python3-pil` (icon resizing).
+            Requires `python3-tk`, `pciutils`. Recommends `python3-pil` (icon
+            resizing).
 
             **Arch / CachyOS / Manjaro / EndeavourOS**
 
@@ -90,7 +90,7 @@ jobs:
             makepkg -si
             ```
 
-            Requires `tk`, `pciutils`, `dmidecode` (pulled in automatically).
+            Requires `tk`, `pciutils` (pulled in automatically).
             An AUR package is planned, at which point `paru -S macabout` will
             also work.
 

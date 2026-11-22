@@ -4,9 +4,9 @@
 
 If you're on a re-purposed Mac and need to see a simple system summary, this makes complete sense.
 
-| Linux Mint | CachyOS |
+| Kubuntu | CachyOS |
 |:---:|:---:|
-| ![macabout on Linux Mint](img/macabout-mint-light.png) | ![macabout on CachyOS](img/macabout-cachyos-dark.png) |
+| ![macabout on Kubuntu](img/macabout-kubuntu-dark.png) | ![macabout on CachyOS](img/macabout-cachyos-dark.png) |
 
 ## Installing on Linux
 
@@ -32,8 +32,7 @@ macabout reads system information from standard Linux interfaces and therefore w
 | Arch, CachyOS, Manjaro, EndeavourOS… | Builds the `PKGBUILD`                        |
 | Fedora, openSUSE, …                  | Not packaged - run from source (see below)   |
 
-Both packages install a sudoers rule so `dmidecode` runs without a password prompt. 
-On other distros you'll need to run macabout with `sudo` to see memory speed/type, the machine model and the serial number.
+macabout never needs root. Versions before 1.0.11 installed a sudoers rule so `dmidecode` could run without a password prompt; that rule is gone, and upgrading removes it.
 
 ## Why?
 I use old Macs with Linux installed and system-info is not presented in the same way; so I found it slightly annoying to understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
@@ -46,16 +45,15 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 |---|---|---|
 | Distro name | `/etc/os-release` (`NAME`) | Zorin OS |
 | Version | `/etc/os-release` (`VERSION`, parenthesised suffix stripped) | Version 17.1 |
-| Machine model | `dmidecode -s system-product-name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
+| Machine model | `/sys/class/dmi/id/product_name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
 | Processor model | `/proc/cpuinfo` (`model name`), cleaned up by family | Intel Xeon W |
 | Processor speed | `/proc/cpuinfo` (`@ X.Y GHz` in model name) | 3.2 GHz |
 | Core count | `/proc/cpuinfo` - unique `(physical id, core id)` pairs | 8-Core |
 | Memory size | `/proc/meminfo` (`MemTotal`), nearest GB | 8 GB |
-| Memory speed/type | `dmidecode -t memory` | 1600 MHz DDR3 |
+| Memory speed/type | `udevadm info` of the DMI device (`MEMORY_DEVICE_*`) | 1600 MHz DDR3 |
 | Graphics | `lspci -nn` PCI ID → bundled `gpu_lookup.json`; falls back to parsed `lspci` name + AMD sysfs VRAM | Radeon Pro Vega 56 8 GB |
-| Serial Number | `dmidecode -s system-serial-number` | C02J1234XYZA |
 
-Memory speed/type, machine model, and serial number require `dmidecode`.
+Memory speed/type need systemd 248 or later (Ubuntu 22.04, Debian 12), which reads them from the firmware at boot.
 
 ## Running from source (devs or deviants)
 
@@ -64,17 +62,17 @@ This is also the path for anyone not on a Debian or Arch distro... Replace `apt`
 ```bash
 git clone https://github.com/PandaWood/macabout.git
 cd macabout
-sudo apt install python3-tk python3-venv python3-pip pciutils dmidecode
+sudo apt install python3-tk python3-venv python3-pip pciutils
 make dev
 source .venv/bin/activate
 make test            # optional: run the test suite
-sudo python3 -m macabout
+python3 -m macabout
 ```
 
 ## Developing on macOS
 
 If you're on MacOS and don't have a linux machine nearby and desperate to work on it...
-You'll just need to install **tkinter** because it ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
+You'll need to install **tkinter** separately, as with most Linux distros, because it doesn't ship with Python on macOS. Install both via Homebrew, matching the version numbers:
 
 ```bash
 brew install python@3.14

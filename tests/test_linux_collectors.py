@@ -4,11 +4,11 @@ from __future__ import annotations
 import textwrap
 
 from macabout.linux_collectors import (
-    _parse_dmidecode_memory,
     _parse_lscpu_model,
     _parse_lspci_vga,
     _parse_meminfo_total_mb,
     _parse_os_release,
+    _parse_udev_memory,
 )
 
 
@@ -83,87 +83,43 @@ class TestParseMeminfTotalMb:
 
 
 # ---------------------------------------------------------------------------
-# _parse_dmidecode_memory
+# _parse_udev_memory
 # ---------------------------------------------------------------------------
 
-_DMI_SAMPLE = """\
-# dmidecode 3.3
-Getting SMBIOS data from sysfs.
-
-Handle 0x1100, DMI type 17, 40 bytes
-Memory Device
-\tArray Handle: 0x1000
-\tError Information Handle: Not Provided
-\tTotal Width: 64 bits
-\tData Width: 64 bits
-\tSize: 8 GB
-\tForm Factor: Row Of Chips
-\tSet: None
-\tLocator: LPDDR4
-\tBank Locator: BANK 0
-\tType: LPDDR4
-\tType Detail: Synchronous Unbuffered (Unregistered)
-\tSpeed: 2133 MT/s
-\tManufacturer: Samsung
-\tSerial Number: Not Specified
-\tAsset Tag: Not Specified
-\tPart Number: K4EBE304EB-EGCG
-
-"""
-
-_DMI_NO_MODULE = """\
-Handle 0x1101, DMI type 17, 40 bytes
-Memory Device
-\tSize: No Module Installed
-\tType: Unknown
-
-Handle 0x1102, DMI type 17, 40 bytes
-Memory Device
-\tSize: 16 GB
-\tType: DDR4
-\tSpeed: 3200 MT/s
-
-"""
-
-_DMI_UNKNOWN_TYPE = """\
-Handle 0x1100, DMI type 17, 40 bytes
-Memory Device
-\tSize: 8 GB
-\tType: Unknown
-\tSpeed: 2400 MT/s
-
+_UDEV_SAMPLE = """\
+MEMORY_ARRAY_LOCATION=System Board Or Motherboard
+MEMORY_DEVICE_0_PRESENT=0
+MEMORY_DEVICE_0_LOCATOR=DIMM_A0
+MEMORY_DEVICE_1_SIZE=8589934592
+MEMORY_DEVICE_1_TYPE=DDR4
+MEMORY_DEVICE_1_SPEED_MTS=2666
+MEMORY_DEVICE_1_CONFIGURED_SPEED_MTS=2400
+MEMORY_DEVICE_2_SIZE=8589934592
+MEMORY_DEVICE_2_TYPE=DDR3
 """
 
 
-class TestParseDmidecodeMemory:
-    def test_basic_lpddr4(self):
-        result = _parse_dmidecode_memory(_DMI_SAMPLE)
-        assert result["type"] == "LPDDR4"
-        assert result["speed_mhz"] == 2133
-
-    def test_skips_no_module_installed(self):
-        result = _parse_dmidecode_memory(_DMI_NO_MODULE)
+class TestParseUdevMemory:
+    def test_first_populated_slot(self):
+        result = _parse_udev_memory(_UDEV_SAMPLE)
         assert result["type"] == "DDR4"
-        assert result["speed_mhz"] == 3200
+        assert result["speed_mhz"] == 2666
+
+    def test_slots_in_numeric_order(self):
+        output = (
+            "MEMORY_DEVICE_10_SIZE=4294967296\nMEMORY_DEVICE_10_TYPE=DDR5\n"
+            "MEMORY_DEVICE_2_SIZE=4294967296\nMEMORY_DEVICE_2_TYPE=LPDDR4\n"
+        )
+        assert _parse_udev_memory(output)["type"] == "LPDDR4"
 
     def test_unknown_type_becomes_none(self):
-        result = _parse_dmidecode_memory(_DMI_UNKNOWN_TYPE)
-        assert result["type"] is None
-        assert result["speed_mhz"] == 2400
+        output = "MEMORY_DEVICE_0_SIZE=4294967296\nMEMORY_DEVICE_0_TYPE=Unknown\n"
+        assert _parse_udev_memory(output) == {"type": None, "speed_mhz": None}
 
-    def test_empty_output(self):
-        result = _parse_dmidecode_memory("")
-        assert result == {"type": None, "speed_mhz": None}
-
-    def test_mhz_unit_accepted(self):
-        content = (
-            "Memory Device\n"
-            "\tSize: 4 GB\n"
-            "\tType: DDR3\n"
-            "\tSpeed: 1600 MHz\n\n"
-        )
-        result = _parse_dmidecode_memory(content)
-        assert result["speed_mhz"] == 1600
+    def test_no_memory_table(self):
+        # Older systemd, a VM, or an ARM board
+        assert _parse_udev_memory("ID_FOR_SEAT=dmi\n") == {"type": None, "speed_mhz": None}
+        assert _parse_udev_memory("") == {"type": None, "speed_mhz": None}
 
 
 # ---------------------------------------------------------------------------

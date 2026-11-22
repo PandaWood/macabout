@@ -124,14 +124,6 @@ def get_graphics_info() -> dict | None:
     return {"raw": name, "pci_id": None, "vram_mb": vram_mb}
 
 
-def get_serial_number() -> str | None:
-    out = _run(["ioreg", "-c", "IOPlatformExpertDevice", "-d", "2"])
-    if not out:
-        return None
-    m = re.search(r'"IOPlatformSerialNumber"\s*=\s*"([^"]+)"', out)
-    return m.group(1) if m else None
-
-
 def get_machine_model() -> str | None:
     sp = _system_profiler()
     m = re.search(r"^\s*Model Name:\s*(.+)$", sp, re.MULTILINE)
