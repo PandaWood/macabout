@@ -16,7 +16,7 @@ source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 # Replaced with the real checksum by .github/workflows/release.yml before the
 # PKGBUILD is pushed to the AUR. Kept as SKIP in-repo so that `makepkg -si`
 # works from a fresh clone without the tag having been published yet.
-sha256sums=('e56149aeb9e0495dd821bff4ae2575a72b38095adf6900c58c4692f19217a643')
+sha256sums=('1a3a86bb041044cbc682d365d768b6a4073fe5ce8700da82b1a1eae2ca121752')
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
