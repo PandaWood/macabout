@@ -1,23 +1,22 @@
 # Maintainer: Peter van der Woude <pandawoude@gmail.com>
 
 pkgname=macabout
-pkgver=1.0.10
+pkgver=1.0.11
 pkgrel=1
 pkgdesc='About This Computer dialog, Apple-style'
 arch=('any')
 url='https://github.com/PandaWood/macabout'
 license=('MIT')
-depends=('python' 'tk' 'pciutils' 'dmidecode')
+depends=('python' 'tk' 'pciutils')
 optdepends=(
   'python-pillow: higher-quality distro icon scaling'
   'librsvg: SVG distro icon rendering'
 )
-backup=('etc/sudoers.d/macabout')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 # Replaced with the real checksum by .github/workflows/release.yml before the
 # PKGBUILD is pushed to the AUR. Kept as SKIP in-repo so that `makepkg -si`
 # works from a fresh clone without the tag having been published yet.
-sha256sums=('abb65cca2143e07978ac1c1a2d784eb5ead12b7b93fe8bc22ddf07a798ae3704')
+sha256sums=('e56149aeb9e0495dd821bff4ae2575a72b38095adf6900c58c4692f19217a643')
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
@@ -36,10 +35,5 @@ package() {
   install -Dm755 arch/macabout.sh "$pkgdir/usr/bin/macabout"
   install -Dm644 debian/usr/share/applications/macabout.desktop \
     "$pkgdir/usr/share/applications/macabout.desktop"
-  # Create the parent explicitly at 750 to match the mode the `filesystem`
-  # package owns it with; `install -D` would default it to 755 and pacman
-  # warns about the mismatch on every install.
-  install -dm750 "$pkgdir/etc/sudoers.d"
-  install -m440 arch/sudoers "$pkgdir/etc/sudoers.d/macabout"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
