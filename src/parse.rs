@@ -1,13 +1,14 @@
 //! Reading the text of `/etc/os-release`, `/proc/cpuinfo`, `/proc/meminfo`, `lspci -nn`,
-//! `udevadm` and sysfs. No I/O here: `system.rs` reads the files and runs the commands.
+//! `lscpu`, `udevadm` and sysfs. No I/O here: `system.rs` reads the files and runs the commands.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use regex::Regex;
 
-fn re(pattern: &str) -> Regex {
-    // INFALLIBLE: every pattern is a constant in this file, compiled by the tests.
+/// A constant pattern of this crate.
+pub(crate) fn re(pattern: &str) -> Regex {
+    // INFALLIBLE: every pattern is a constant, compiled by the tests.
     Regex::new(pattern).expect("valid regex")
 }
 
@@ -85,6 +86,29 @@ pub fn cpu_model(cpuinfo: &str) -> Option<String> {
         .map(str::to_string)
 }
 
+/// The CPU as `lscpu` names it from the part numbers ARM kernels list: "ARM Cortex-A72", or
+/// with two kinds of core (big.LITTLE) "ARM Cortex-A55 + Cortex-A76".
+pub fn lscpu_model(lscpu: &str) -> Option<String> {
+    let mut vendor = None;
+    let mut models: Vec<&str> = Vec::new();
+    for (key, value) in lscpu.lines().filter_map(|line| line.trim().split_once(':')) {
+        let value = value.trim();
+        match key {
+            "Vendor ID" => vendor = vendor.or(Some(value)),
+            "Model name" if value != "-" && !value.is_empty() && !models.contains(&value) => {
+                models.push(value);
+            }
+            _ => {}
+        }
+    }
+    let models = models.join(" + ");
+    match vendor {
+        _ if models.is_empty() => None,
+        Some(vendor) if !models.starts_with(vendor) => Some(format!("{vendor} {models}")),
+        _ => Some(models),
+    }
+}
+
 /// Physical cores: distinct (`physical id`, `core id`) pairs, else the number of `processor`
 /// entries when the kernel lists no core ids.
 pub fn cpu_cores(cpuinfo: &str) -> Option<u32> {
@@ -157,31 +181,61 @@ pub fn memory_details(udev: &str) -> MemoryDetails {
         .unwrap_or_default()
 }
 
-/// The graphics card as `lspci -nn` names it.
+/// The graphics processor.
 #[derive(Debug, PartialEq)]
 pub struct Gpu {
     /// The device name, vendor included: "NVIDIA Corporation GA106 [GeForce RTX 3060]".
     pub name: String,
-    /// "vvvv:dddd", in lower case.
-    pub pci_id: String,
+    /// Where it sits on the PCI bus; `None` for one built into the chip.
+    pub pci: Option<Pci>,
 }
 
-/// The first display controller and its PCI id (the last `[vvvv:dddd]` on its line).
+#[derive(Debug, PartialEq)]
+pub struct Pci {
+    /// "vvvv:dddd", in lower case.
+    pub id: String,
+    /// The address `lspci` gives, "01:00.0", with the domain only when there are several.
+    pub slot: String,
+}
+
+/// The first display controller `lspci -nn` lists, with its PCI id (the last `[vvvv:dddd]` on
+/// its line).
 pub fn lspci_gpu(lspci: &str) -> Option<Gpu> {
     lspci
         .lines()
         .filter(|line| VGA.is_match(line))
         .find_map(|line| {
             let id = PCI_ID.captures_iter(line).last()?;
+            let slot = line.split_whitespace().next()?;
             let name = match line.split_once("]: ") {
                 Some((_, rest)) => PCI_ID_TAIL.replace_all(rest, "").trim().to_string(),
                 None => String::new(),
             };
             Some(Gpu {
                 name,
-                pci_id: id[1].to_lowercase(),
+                pci: Some(Pci {
+                    id: id[1].to_lowercase(),
+                    slot: slot.to_string(),
+                }),
             })
         })
+}
+
+/// A graphics processor built into the chip (ARM boards), from its DRM driver's name.
+pub fn drm_gpu(driver: &str) -> Option<Gpu> {
+    let name = match driver {
+        "v3d" | "vc4" => "Broadcom VideoCore",
+        "panfrost" | "panthor" | "lima" => "Arm Mali",
+        "msm" => "Qualcomm Adreno",
+        "etnaviv" => "Vivante GPU",
+        "asahi" => "Apple GPU",
+        "tegra" => "NVIDIA Tegra",
+        _ => return None,
+    };
+    Some(Gpu {
+        name: name.to_string(),
+        pci: None,
+    })
 }
 
 /// Values firmware puts where it has nothing to say.
@@ -203,12 +257,12 @@ pub fn dmi_value(text: &str, extra_placeholder: &str) -> Option<String> {
     (!placeholder).then(|| value.to_string())
 }
 
-/// The first positive `mem_info_vram_total` (bytes), in MiB.
-pub fn vram_mb<S: AsRef<str>>(contents: &[S]) -> Option<u64> {
-    contents
-        .iter()
-        .filter_map(|text| text.as_ref().trim().parse::<u64>().ok())
-        .find(|&bytes| bytes > 0)
+/// `mem_info_vram_total` (bytes), in MiB, unless it is zero.
+pub fn vram_mb(text: &str) -> Option<u64> {
+    text.trim()
+        .parse::<u64>()
+        .ok()
+        .filter(|&bytes| bytes > 0)
         .map(|bytes| bytes / (1024 * 1024))
 }
 
@@ -271,6 +325,27 @@ mod tests {
     }
 
     #[test]
+    fn arm_cpus() {
+        let pi4 = "processor\t: 0\nBogoMIPS\t: 108.00\nCPU implementer\t: 0x41\nCPU part\t: 0xd08\n\n\
+            processor\t: 1\n\nprocessor\t: 2\n\nprocessor\t: 3\n\nHardware\t: BCM2835\n\
+            Model\t\t: Raspberry Pi 4 Model B Rev 1.4\n";
+        assert_eq!(cpu_model(pi4), None, "ARM kernels give no model name");
+        assert_eq!(cpu_cores(pi4), Some(4));
+
+        let lscpu = "Architecture:            aarch64\nCPU(s):                  4\n\
+            Vendor ID:               ARM\nModel name:              Cortex-A72\nModel:  3\n";
+        assert_eq!(lscpu_model(lscpu).as_deref(), Some("ARM Cortex-A72"));
+        let big_little = "Vendor ID:               ARM\n  Model name:            Cortex-A55\n\
+            \x20   Model:               0\n  Model name:            Cortex-A76\n";
+        assert_eq!(
+            lscpu_model(big_little).as_deref(),
+            Some("ARM Cortex-A55 + Cortex-A76")
+        );
+        assert_eq!(lscpu_model("Vendor ID: ARM\nModel name: -\n"), None);
+        assert_eq!(lscpu_model(""), None);
+    }
+
+    #[test]
     fn meminfo() {
         let meminfo = "MemTotal:       8126464 kB\nMemFree:        1234567 kB\n";
         assert_eq!(mem_total_mb(meminfo), Some(7936));
@@ -311,25 +386,50 @@ mod tests {
             lspci_gpu(nvidia),
             Some(Gpu {
                 name: "NVIDIA Corporation GA106 [GeForce RTX 3060]".into(),
-                pci_id: "10de:2503".into(),
+                pci: Some(Pci {
+                    id: "10de:2503".into(),
+                    slot: "01:00.0".into(),
+                }),
             })
         );
         let amd = "03:00.0 Display controller [0380]: Advanced Micro Devices, Inc. [AMD/ATI] \
             Navi 10 [Radeon RX 5700 XT] [1002:731f] (rev c1)\n";
         assert_eq!(
-            lspci_gpu(amd).map(|g| g.pci_id).as_deref(),
+            lspci_gpu(amd).and_then(|g| g.pci).map(|p| p.id).as_deref(),
             Some("1002:731f")
         );
         let nvidia_3d = "01:00.0 3D controller [0302]: NVIDIA Corporation TU117M \
             [GeForce GTX 1650 Mobile] [10de:1f9d] (rev a1)\n";
         assert_eq!(
-            lspci_gpu(nvidia_3d).map(|g| g.pci_id).as_deref(),
+            lspci_gpu(nvidia_3d)
+                .and_then(|g| g.pci)
+                .map(|p| p.id)
+                .as_deref(),
             Some("10de:1f9d")
         );
         let sata = "00:1f.2 SATA controller [0106]: Intel Corporation 8 Series SATA Controller 1 \
             [AHCI mode] [8086:9c03]\n";
         assert_eq!(lspci_gpu(sata), None);
         assert_eq!(lspci_gpu(""), None);
+        let domain = "0001:00:00.0 VGA compatible controller [0300]: Intel Corporation Device \
+            [8086:46a6]\n";
+        assert_eq!(
+            lspci_gpu(domain)
+                .and_then(|g| g.pci)
+                .map(|p| p.slot)
+                .as_deref(),
+            Some("0001:00:00.0")
+        );
+    }
+
+    #[test]
+    fn drm_gpus() {
+        assert_eq!(
+            drm_gpu("v3d").map(|g| g.name).as_deref(),
+            Some("Broadcom VideoCore")
+        );
+        assert_eq!(drm_gpu("panfrost").and_then(|g| g.pci), None);
+        assert_eq!(drm_gpu("amdgpu"), None, "PCI cards come from lspci");
     }
 
     #[test]
@@ -348,8 +448,8 @@ mod tests {
 
     #[test]
     fn sysfs_vram() {
-        assert_eq!(vram_mb(&["0\n", "8573157376\n"]), Some(8176));
-        assert_eq!(vram_mb(&["junk"]), None);
-        assert_eq!(vram_mb::<&str>(&[]), None);
+        assert_eq!(vram_mb("8573157376\n"), Some(8176));
+        assert_eq!(vram_mb("0\n"), None);
+        assert_eq!(vram_mb("junk"), None);
     }
 }

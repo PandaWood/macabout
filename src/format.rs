@@ -7,12 +7,8 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::Deserialize;
 
+use crate::parse::re;
 use crate::system::SystemInfo;
-
-fn re(pattern: &str) -> Regex {
-    // INFALLIBLE: every pattern is a constant in this file, compiled by the tests.
-    Regex::new(pattern).expect("valid regex")
-}
 
 static APPLE_M: LazyLock<Regex> = LazyLock::new(|| re(r"^Apple\s+M\d"));
 static GHZ: LazyLock<Regex> = LazyLock::new(|| re(r"(?i)@\s*([0-9]+(?:\.[0-9]+)?)\s*GHz"));
@@ -202,7 +198,10 @@ impl Summary {
             None => memory(0, None, None),
         };
         let graphics = match &info.gpu {
-            Some(gpu) => graphics(&gpu.name, Some(&gpu.pci_id), info.vram_mb),
+            Some(gpu) => {
+                let pci_id = gpu.pci.as_ref().map(|pci| pci.id.as_str());
+                graphics(&gpu.name, pci_id, info.vram_mb)
+            }
             None => graphics("", None, None),
         };
         Summary {
@@ -226,12 +225,17 @@ impl Summary {
         ]
     }
 
+    /// "Version 17.1", or `None` when the distro has no version (rolling releases).
+    pub fn version_line(&self) -> Option<String> {
+        Some(&self.os_version)
+            .filter(|v| !v.is_empty())
+            .map(|v| format!("Version {v}"))
+    }
+
     /// The summary as plain text: what `--text` prints and the copy button copies.
     pub fn copy_text(&self) -> String {
         let mut lines = vec![self.os_name.clone()];
-        if !self.os_version.is_empty() {
-            lines.push(format!("Version {}", self.os_version));
-        }
+        lines.extend(self.version_line());
         if !self.model.is_empty() {
             lines.push(self.model.clone());
         }

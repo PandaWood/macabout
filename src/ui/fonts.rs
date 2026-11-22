@@ -1,14 +1,12 @@
 //! The faces the dialog draws with: the first installed family of [`FONT_CANDIDATES`], else
 //! the desktop's `sans-serif` as fontconfig resolves it.
 
-use std::process::Command;
 use std::sync::Arc;
-use std::time::Duration;
 
 use eframe::egui::{FontData, FontDefinitions, FontFamily, FontId};
 use resvg::usvg::fontdb::{Database, Family, Query, Stretch, Style, Weight};
 
-use crate::system::run_command;
+use crate::system::run;
 
 /// In order of preference.
 const FONT_CANDIDATES: [&str; 7] = [
@@ -41,9 +39,7 @@ pub fn system_database() -> Database {
 
 /// The desktop's sans-serif family, as fontconfig resolves it.
 fn sans_serif() -> Option<String> {
-    let mut command = Command::new("fc-match");
-    command.args(["-f", "%{family[0]}", "sans-serif"]);
-    run_command(&mut command, Duration::from_secs(2)).filter(|f| !f.is_empty())
+    run("fc-match", &["-f", "%{family[0]}", "sans-serif"]).filter(|f| !f.is_empty())
 }
 
 /// The first candidate installed, else the desktop's sans-serif.

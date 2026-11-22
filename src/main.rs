@@ -25,8 +25,9 @@ struct Args {
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let summary = format::Summary::new(system::collect(args.mock));
+    let summary = move || format::Summary::new(system::collect(args.mock));
     if args.text {
+        let summary = summary();
         let mut out = std::io::stdout().lock();
         return match writeln!(out, "{}", summary.copy_text()).and_then(|()| out.flush()) {
             Ok(()) => ExitCode::SUCCESS,

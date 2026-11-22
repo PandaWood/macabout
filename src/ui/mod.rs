@@ -9,6 +9,7 @@ mod icon;
 mod theme;
 
 use std::sync::Arc;
+use std::thread::ScopedJoinHandle;
 use std::time::Duration;
 
 use eframe::egui::{
@@ -30,27 +31,6 @@ const COPIED_SECONDS: f64 = 1.5;
 const BUTTON: f32 = 26.0;
 /// Padding around a label's text, per side.
 const LABEL_INSET: f32 = 2.0;
-
-/// What the dialog shows.
-struct Content {
-    summary: Summary,
-    /// "Version 17.1", or `None` when the distro has no version (rolling releases).
-    version: Option<String>,
-    copy_text: String,
-}
-
-impl Content {
-    fn new(summary: Summary) -> Self {
-        let version = Some(&summary.os_version)
-            .filter(|v| !v.is_empty())
-            .map(|v| format!("Version {v}"));
-        Content {
-            version,
-            copy_text: summary.copy_text(),
-            summary,
-        }
-    }
-}
 
 /// Laid-out text.
 struct Text(Arc<Galley>);
@@ -88,24 +68,24 @@ fn label_size(text: &Text) -> Vec2 {
     text.size() + Vec2::splat(2.0 * LABEL_INSET)
 }
 
-/// Where everything goes.
+/// Where everything goes. The footer and the copy button sit in the window's bottom-right
+/// corner, wherever the window manager puts it; the rest is placed from the top left.
 struct Layout {
+    /// The size the window asks for.
     size: Vec2,
     icon: Rect,
     labels: Vec<Label>,
-    button: Rect,
+    footer: Text,
 }
 
 impl Layout {
-    fn new(ctx: &Context, content: &Content, palette: &Palette) -> Self {
+    fn new(ctx: &Context, summary: &Summary, palette: &Palette) -> Self {
         ctx.fonts_mut(|f| {
             let mut text = |s: &str, font, color, wrap| Text::new(f, s, font, color, wrap);
-            let summary = &content.summary;
             let title = text(&summary.os_name, fonts::bold(24.0), palette.fg, None);
-            let version = content
-                .version
-                .as_deref()
-                .map(|v| text(v, fonts::regular(12.0), palette.subtle, None));
+            let version = summary
+                .version_line()
+                .map(|v| text(&v, fonts::regular(12.0), palette.subtle, None));
             let model = Some(summary.model.as_str())
                 .filter(|m| !m.is_empty())
                 .map(|m| text(m, fonts::regular(12.0), palette.fg, None));
@@ -174,20 +154,26 @@ impl Layout {
                 16.0 + LEFT_W / 2.0 - icon::ICON_SIZE / 2.0,
                 16.0 + (main_h / 2.0).round() - icon::ICON_SIZE / 2.0,
             );
-            labels.push(Label {
-                at: (size - label_size(&footer) - vec2(8.0, 6.0)).to_pos2(),
-                text: footer,
-            });
             Layout {
                 size,
                 icon: Rect::from_min_size(icon_at, Vec2::splat(icon::ICON_SIZE)),
                 labels,
-                button: Rect::from_min_size(
-                    (size - vec2(12.0, 44.0) - Vec2::splat(BUTTON)).to_pos2(),
-                    Vec2::splat(BUTTON),
-                ),
+                footer,
             }
         })
+    }
+
+    /// The footer's box in `window`.
+    fn footer_at(&self, window: Rect) -> Pos2 {
+        window.max - label_size(&self.footer) - vec2(8.0, 6.0)
+    }
+
+    /// The copy button in `window`.
+    fn button(window: Rect) -> Rect {
+        Rect::from_min_size(
+            window.max - vec2(12.0, 44.0) - Vec2::splat(BUTTON),
+            Vec2::splat(BUTTON),
+        )
     }
 }
 
@@ -199,7 +185,7 @@ enum Logo {
 }
 
 struct Dialog {
-    content: Content,
+    summary: Summary,
     palette: &'static Palette,
     fontdb: Arc<Database>,
     logo: Logo,
@@ -235,9 +221,9 @@ impl Dialog {
             Logo::Image(_, None) => {}
             Logo::Circle => {
                 let pad = (icon::ICON_SIZE / 18.0).floor();
-                let color = icon::brand_color(&self.content.summary.distro_id);
+                let color = icon::brand_color(&self.summary.distro_id);
                 painter.circle_filled(rect.center(), icon::ICON_SIZE / 2.0 - pad, color);
-                if let Some(first) = self.content.summary.os_name.chars().next() {
+                if let Some(first) = self.summary.os_name.chars().next() {
                     let initial: String = first.to_uppercase().collect();
                     let font = fonts::bold((icon::ICON_SIZE / 3.0).floor());
                     let text = self.text(ui.ctx(), &initial, font, Color32::WHITE);
@@ -263,12 +249,15 @@ impl Dialog {
         painter.rect_stroke(front, 0.0, stroke, StrokeKind::Middle);
     }
 
-    /// The tooltip above the button, kept inside the window.
-    fn paint_tip(&self, painter: &Painter, button: Rect, window: Vec2, tip: &str) {
+    /// The tooltip above the button, kept inside the window, against its left edge if the
+    /// window is narrower than the tip.
+    fn paint_tip(&self, painter: &Painter, button: Rect, window: Rect, tip: &str) {
         let p = self.palette;
         let text = self.text(painter.ctx(), tip, fonts::regular(9.0), p.bg);
         let size = text.size() + vec2(12.0, 4.0);
-        let x = (button.min.x + ((BUTTON - size.x) / 2.0).floor()).clamp(0.0, window.x - size.x);
+        let x = (button.min.x + ((BUTTON - size.x) / 2.0).floor())
+            .min(window.max.x - size.x)
+            .max(window.min.x);
         let rect = Rect::from_min_size(pos2(x, button.min.y - size.y - 4.0), size);
         painter.rect_filled(rect, 0.0, p.fg);
         text.paint(painter, rect.min + vec2(6.0, 2.0));
@@ -286,7 +275,7 @@ impl Dialog {
         let pressed = hovered && ui.input(|i| i.pointer.primary_pressed());
         let now = ui.input(|i| i.time);
         if self.button.update(hovered, pressed, now) {
-            ctx.copy_text(self.content.copy_text.clone());
+            ctx.copy_text(self.summary.copy_text());
         }
         if let Some(until) = self.button.copied_until {
             ctx.request_repaint_after(Duration::from_secs_f64((until - now).max(0.0)));
@@ -324,20 +313,23 @@ impl CopyButton {
 
 impl eframe::App for Dialog {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        let layout = Layout::new(ui.ctx(), &self.content, self.palette);
+        let layout = Layout::new(ui.ctx(), &self.summary, self.palette);
         let window = ui.max_rect();
+        let button = Layout::button(window);
         ui.painter().rect_filled(window, 0.0, self.palette.bg);
-        self.interact(ui, layout.button);
+        self.interact(ui, button);
         self.paint_logo(ui, layout.icon);
         let painter = ui.painter();
+        let inset = Vec2::splat(LABEL_INSET);
         for label in &layout.labels {
-            label
-                .text
-                .paint(painter, label.at + Vec2::splat(LABEL_INSET));
+            label.text.paint(painter, label.at + inset);
         }
-        self.paint_button(painter, layout.button);
+        layout
+            .footer
+            .paint(painter, layout.footer_at(window) + inset);
+        self.paint_button(painter, button);
         if let Some(tip) = self.button.tip {
-            self.paint_tip(painter, layout.button, window.size(), tip);
+            self.paint_tip(painter, button, window, tip);
         }
     }
 
@@ -346,16 +338,25 @@ impl eframe::App for Dialog {
     }
 }
 
-/// Open the window and wait for it to close.
-pub fn show_dialog(summary: Summary) -> Result<(), String> {
-    let content = Content::new(summary);
-    let palette = if theme::detect_dark_mode() {
-        &theme::DARK
-    } else {
-        &theme::LIGHT
-    };
-    let fontdb = Arc::new(fonts::system_database());
-    let definitions = fonts::definitions(&fontdb);
+/// The thread's result, or its panic carried on.
+fn join<T>(thread: ScopedJoinHandle<'_, T>) -> T {
+    thread
+        .join()
+        .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+}
+
+/// Read the computer with `collect`, open the window and wait for it to close.
+pub fn show_dialog(collect: impl FnOnce() -> Summary + Send) -> Result<(), String> {
+    // The computer, the colour scheme and the fonts are each found by running commands or
+    // reading files; side by side, the window opens sooner.
+    let (summary, dark, (fontdb, definitions)) = std::thread::scope(|s| {
+        let summary = s.spawn(collect);
+        let dark = s.spawn(theme::detect_dark_mode);
+        let fontdb = fonts::system_database();
+        let definitions = fonts::definitions(&fontdb);
+        (join(summary), join(dark), (Arc::new(fontdb), definitions))
+    });
+    let palette = if dark { &theme::DARK } else { &theme::LIGHT };
     let new_context = || {
         let ctx = Context::default();
         ctx.set_fonts(definitions.clone());
@@ -367,10 +368,10 @@ pub fn show_dialog(summary: Summary) -> Result<(), String> {
     // Lay the dialog out once, on a context of its own, to open the window at its final size.
     let mut size = Vec2::ZERO;
     let mut output = new_context().run_ui(RawInput::default(), |ui| {
-        size = Layout::new(ui.ctx(), &content, palette).size;
+        size = Layout::new(ui.ctx(), &summary, palette).size;
     });
     output.textures_delta.clear();
-    let logo = match icon::find_system_icon(&content.summary.distro_id, &content.summary.logo_id) {
+    let logo = match icon::find_system_icon(&summary.distro_id, &summary.logo_id) {
         Some(path) => Logo::Image(path, None),
         None => Logo::Circle,
     };
@@ -387,7 +388,7 @@ pub fn show_dialog(summary: Summary) -> Result<(), String> {
         ..Default::default()
     };
     let dialog = Dialog {
-        content,
+        summary,
         palette,
         fontdb,
         logo,
