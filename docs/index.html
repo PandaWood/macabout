@@ -36,7 +36,7 @@
                 <button type="button" id="copy-command">Copy</button>
             </div>
             <p>The installer works on Arch-based distros as well as Debian/Ubuntu. It checks which you're running and installs the package.</p>
-            <p class="note">Run as your normal user, without <code>sudo</code>. macabout will ask for a password when it needs root.</p>
+            <p class="note">Run as your normal user, without <code>sudo</code>. The installer asks for your password when it installs the package.</p>
         </dd>
 
         <dt>Debian family</dt>
@@ -55,7 +55,7 @@
             <figcaption>Linux Mint on a 2012 MacBook Pro</figcaption>
         </figure>
         <figure class="cachy">
-            <img src="img/macabout-cachyos-dark.png" width="904" height="483" alt="macabout window on CachyOS: iMacPro1,1, 3.2 GHz 8-Core Intel Xeon W-2140B, 32 GB 2666 MHz DDR4, Radeon Pro Vega 56 8 GB.">
+            <img src="img/macabout-cachyos-dark.png" width="1410" height="694" alt="macabout window on CachyOS: iMacPro1,1, 3.2 GHz 8-Core Intel Xeon W-2140B, 32 GB 2666 MHz DDR4, Radeon Pro Vega 56 8 GB.">
             <figcaption>CachyOS on an iMac Pro</figcaption>
         </figure>
     </div>
@@ -65,16 +65,15 @@
         <dd>
             <table class="reads">
                 <tr><th scope="row">Distro and version</th><td><code>/etc/os-release</code></td></tr>
-                <tr><th scope="row">Machine model</th><td><code>dmidecode</code></td></tr>
+                <tr><th scope="row">Machine model</th><td><code>/sys/class/dmi/id</code></td></tr>
                 <tr><th scope="row">Processor</th><td><code>/proc/cpuinfo</code></td></tr>
-                <tr><th scope="row">Memory</th><td><code>/proc/meminfo</code>, and <code>dmidecode</code> for speed and type</td></tr>
+                <tr><th scope="row">Memory</th><td><code>/proc/meminfo</code>, and udev for speed and type</td></tr>
                 <tr><th scope="row">Graphics</th><td><code>lspci</code>, matched against a bundled table of cards</td></tr>
-                <tr><th scope="row">Serial number</th><td><code>dmidecode</code></td></tr>
             </table>
         </dd>
 
         <dt>Permissions</dt>
-        <dd><code>dmidecode</code> needs root. Both packages add a sudoers rule for it, so macabout opens without a password prompt.</dd>
+        <dd>None. Everything macabout reads is readable by any user, so it never needs root.</dd>
 
         <dt>Source</dt>
         <dd><a href="https://github.com/PandaWood/macabout">PandaWood/macabout on GitHub</a>. To install by hand, the <code>.deb</code> and <code>PKGBUILD</code> are attached to <a href="https://github.com/PandaWood/macabout/releases/latest">the latest release</a>.</dd>

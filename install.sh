@@ -55,11 +55,20 @@ fetch_asset_url() {
 }
 
 install_debian() {
+  local arch url deb
+  case "$(uname -m)" in
+    x86_64) arch="amd64" ;;
+    aarch64 | arm64) arch="arm64" ;;
+    *)
+      echo "❌ Error: no macabout package for $(uname -m) (only x86_64 and aarch64)"
+      exit 1
+      ;;
+  esac
+
   echo "🔍 Fetching latest macabout release..."
-  local url deb
-  url="$(fetch_asset_url '\.deb')"
+  url="$(fetch_asset_url "_${arch}\\.deb")"
   if [ -z "$url" ]; then
-    echo "❌ Error: Could not find a .deb in the latest release"
+    echo "❌ Error: Could not find a ${arch} .deb in the latest release"
     exit 1
   fi
 

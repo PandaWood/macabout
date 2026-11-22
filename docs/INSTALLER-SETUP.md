@@ -76,7 +76,7 @@ git push origin main
 
 ### 4. Create a Release
 
-The version must match in three places before tagging — `macabout/__init__.py`,
+The version must match in three places before tagging — `Cargo.toml`,
 `debian/DEBIAN/control` and `arch/PKGBUILD`. CI fails the build if they drift.
 
 ```bash
@@ -85,10 +85,10 @@ git push origin v1.0.10
 ```
 
 The workflow will:
-- Build the .deb
+- Build the amd64 and arm64 .debs
 - Stamp `arch/PKGBUILD` with the tag version and the source tarball's sha256
 - Push the PKGBUILD to the AUR
-- Create a GitHub Release with the .deb, the PKGBUILD and install.sh
+- Create a GitHub Release with the .debs, the PKGBUILD and install.sh
 - Deploy install.sh, the PKGBUILD and index.html to GitHub Pages
 
 ### 5. Test It

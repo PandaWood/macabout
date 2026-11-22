@@ -12,63 +12,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Validate Python syntax
-        run: |
-          python3 -c "
-          import ast, pathlib, sys
-          errors = []
-          for p in pathlib.Path('macabout').rglob('*.py'):
-              try:
-                  ast.parse(p.read_text())
-              except SyntaxError as e:
-                  errors.append(f'{p}: {e}')
-          if errors:
-              print('\n'.join(errors)); sys.exit(1)
-          print(f'All .py files OK')
-          "
-
       - name: Validate version is in sync across packaging files
         run: |
-          python3 -c "
-          import re, sys
-          from macabout import __version__
-
-          def find(path, pattern):
-              m = re.search(pattern, open(path).read(), re.M)
-              return m.group(1) if m else None
-
-          versions = {
-              'macabout/__init__.py': __version__,
-              'debian/DEBIAN/control': find('debian/DEBIAN/control', r'^Version: (.+)\$'),
-              'arch/PKGBUILD': find('arch/PKGBUILD', r'^pkgver=(.+)\$'),
-          }
-          for path, v in versions.items():
-              print(f'  {path}: {v}')
-          if len(set(versions.values())) != 1:
-              print('')
-              print('Error: version mismatch. Update all three files to the same value.')
-              sys.exit(1)
-          print('Versions in sync')
-          "
+          cargo=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          deb=$(sed -n 's/^Version: //p' debian/DEBIAN/control)
+          arch=$(sed -n 's/^pkgver=//p' arch/PKGBUILD)
+          echo "  Cargo.toml: $cargo"
+          echo "  debian/DEBIAN/control: $deb"
+          echo "  arch/PKGBUILD: $arch"
+          if [ "$cargo" != "$deb" ] || [ "$cargo" != "$arch" ]; then
+            echo "Error: version mismatch. Update all three files to the same value."
+            exit 1
+          fi
 
       - name: Validate GPU lookup JSON
-        run: |
-          python3 -c "
-          import json, sys
-          data = json.loads(open('macabout/data/gpu_lookup.json').read())
-          print(f'gpu_lookup.json OK ({len(data)} entries)')
-          "
+        run: jq -e 'type == "object"' data/gpu_lookup.json > /dev/null
 
-      - name: Validate hardware collection and formatting
-        run: |
-          python3 -c "
-          from macabout import hwinfo, formatters
-          info = hwinfo.collect_system_info(force_mock=True)
-          d = formatters.format_all(info)
-          for k, v in d.items():
-              print(f'  {k}: {v}')
-          "
+  rust:
+    # Ubuntu 22.04 is the oldest supported base (Zorin 17): its glibc is what the release builds against.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+
+      - name: Build the .deb
+        run: ./build.sh

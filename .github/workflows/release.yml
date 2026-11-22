@@ -6,7 +6,46 @@ on:
       - "v*"
 
 jobs:
-  build-and-release:
+  build:
+    # Ubuntu 22.04 is the oldest supported base (Zorin 17): the binary needs its glibc or newer.
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-22.04
+            arch: amd64
+          - runner: ubuntu-22.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches package version
+        run: |
+          PKG_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: tag $GITHUB_REF_NAME does not match Cargo.toml version $PKG_VERSION"
+            echo "Update the version (CI checks all three files agree) before tagging."
+            exit 1
+          fi
+          echo "Version: $PKG_VERSION"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Test
+        run: cargo test --locked --release
+
+      - name: Build .deb
+        run: ./build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: build/macabout_*_${{ matrix.arch }}.deb
+
+  release:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,26 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: actions/download-artifact@v4
         with:
-          python-version: "3.10"
-
-      - name: Verify tag matches package version
-        run: |
-          PKG_VERSION=$(python3 -c "from macabout import __version__; print(__version__)")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "Error: tag $GITHUB_REF_NAME does not match __version__ $PKG_VERSION"
-            echo "Update macabout/__init__.py before tagging."
-            exit 1
-          fi
-          echo "Version: $PKG_VERSION"
-
-      - name: Install dpkg tools
-        run: sudo apt-get install -y dpkg
-
-      - name: Build .deb
-        run: ./build.sh
+          pattern: deb-*
+          path: build
+          merge-multiple: true
 
       - name: Stamp PKGBUILD with version and source checksum
         run: |
@@ -57,7 +81,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/macabout_*_all.deb
+            build/macabout_*_amd64.deb
+            build/macabout_*_arm64.deb
             arch/PKGBUILD
             install.sh
           generate_release_notes: true
@@ -75,12 +100,14 @@ jobs:
 
             **Debian / Ubuntu / Mint / Zorin**
 
+            Download the `.deb` for your machine (`amd64` for Intel/AMD,
+            `arm64` for ARM), then:
+
             ```bash
-            sudo apt install ./macabout_*.deb
+            sudo apt install ./macabout_*_amd64.deb
             ```
 
-            Requires `python3-tk`, `pciutils`, `dmidecode`. Recommends
-            `python3-pil` (icon resizing).
+            Requires `pciutils` (pulled in automatically).
 
             **Arch / CachyOS / Manjaro / EndeavourOS**
 
@@ -90,7 +117,8 @@ jobs:
             makepkg -si
             ```
 
-            Requires `tk`, `pciutils`, `dmidecode` (pulled in automatically).
+            Builds from source with `cargo`; requires `pciutils` (pulled in
+            automatically).
             An AUR package is planned, at which point `paru -S macabout` will
             also work.
 

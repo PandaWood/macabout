@@ -189,7 +189,7 @@ h1 {
    windows come out the same height. */
 .windows figure { margin: 0; min-width: 0; }
 .windows .mint { flex: 1.761 1 0; }
-.windows .cachy { flex: 1.872 1 0; }
+.windows .cachy { flex: 2.032 1 0; }
 
 .windows img {
     display: block;

@@ -24,7 +24,7 @@ On Debian (eg Ubuntu/Mint) it fetches the `.deb` and on Arch distros (eg CachyOS
 
 ## Compatibility
 
-macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (or macOS). Only the **packaging** is distro-specific:
+macabout reads system information from standard Linux interfaces and therefore works on any modern Linux distro (x86_64 or ARM64). Only the **packaging** is distro-specific:
 
 | Distro family                        | What the installer does                      |
 |--------------------------------------|----------------------------------------------|
@@ -32,8 +32,7 @@ macabout reads system information from standard Linux interfaces and therefore w
 | Arch, CachyOS, Manjaro, EndeavourOS… | Builds the `PKGBUILD`                        |
 | Fedora, openSUSE, …                  | Not packaged - run from source (see below)   |
 
-Both packages install a sudoers rule so `dmidecode` runs without a password prompt. 
-On other distros you'll need to run macabout with `sudo` to see memory speed/type, the machine model and the serial number.
+macabout never needs root: everything it reads is readable by any user.
 
 ## Why?
 I use old Macs with Linux installed and system-info is not presented in the same way; so I found it slightly annoying to understand exactly what Mac I have. Just annoying enough to crack out Claude Code and finally do something useful with it, for probably 10% of users ;-)
@@ -46,62 +45,46 @@ Having a Mac isn't compulsory for `macabout` to work - it's compatible with any 
 |---|---|---|
 | Distro name | `/etc/os-release` (`NAME`) | Zorin OS |
 | Version | `/etc/os-release` (`VERSION`, parenthesised suffix stripped) | Version 17.1 |
-| Machine model | `dmidecode -s system-product-name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
+| Machine model | `/sys/class/dmi/id/product_name` (unlabelled line; hidden if absent or OEM placeholder) | MacBook Air (13-inch, Mid 2013) |
 | Processor model | `/proc/cpuinfo` (`model name`), cleaned up by family | Intel Xeon W |
 | Processor speed | `/proc/cpuinfo` (`@ X.Y GHz` in model name) | 3.2 GHz |
 | Core count | `/proc/cpuinfo` - unique `(physical id, core id)` pairs | 8-Core |
 | Memory size | `/proc/meminfo` (`MemTotal`), nearest GB | 8 GB |
-| Memory speed/type | `dmidecode -t memory` | 1600 MHz DDR3 |
+| Memory speed/type | udev's copy of the firmware's memory table (`udevadm info /sys/class/dmi/id`) | 1600 MHz DDR3 |
 | Graphics | `lspci -nn` PCI ID → bundled `gpu_lookup.json`; falls back to parsed `lspci` name + AMD sysfs VRAM | Radeon Pro Vega 56 8 GB |
-| Serial Number | `dmidecode -s system-serial-number` | C02J1234XYZA |
 
-Memory speed/type, machine model, and serial number require `dmidecode`.
+Memory speed/type needs systemd 248 or later (Ubuntu 22.04, Debian 12 and newer); without it the dialog shows the memory size alone.
 
 ## Running from source (devs or deviants)
 
 This is also the path for anyone not on a Debian or Arch distro... Replace `apt` command with your package manager's equivalent.
 
+You'll need a Rust toolchain ([rustup](https://rustup.rs)) as well as `pciutils`.
+
 ```bash
 git clone https://github.com/PandaWood/macabout.git
 cd macabout
-sudo apt install python3-tk python3-venv python3-pip pciutils dmidecode
-make dev
-source .venv/bin/activate
+sudo apt install pciutils
 make test            # optional: run the test suite
-sudo python3 -m macabout
+make mock            # static Zorin OS sample data (good for UI work)
+cargo build --release
+target/release/macabout
 ```
 
-## Developing on macOS
+`macabout --text` prints the summary instead of opening the window.
 
-If you're on MacOS and don't have a linux machine nearby and desperate to work on it...
-You'll just need to install **tkinter** because it ships separately from Python on macOS. Install both via Homebrew, matching the version numbers:
-
-```bash
-brew install python@3.14
-brew install python-tk@3.14
-```
-Then setup/run:
-
-```bash
-make dev
-source .venv/bin/activate
-make mock     # static Zorin OS sample data (good for UI work)
-make run      # real macOS system calls
-```
+Up to 1.0.10 macabout was written in Python; that version is the `v1.0.10` tag.
 
 ## Distro icon
 
 The icon is fetched from the system's own branding, which varies, so we came up with these checks, in this order:
 
-1. A bundled PNG at `macabout/data/icons/{distro_id}.png`
-2. Otherwise the system's own icon, tried by name in this order:
+1. The system's own icon (PNG or SVG), tried by name in this order:
    - `LOGO=` field in `/etc/os-release` (explicit XDG icon name - most authoritative)
    - `distributor-logo` (FreeDesktop standard, present on most distros)
    - `distributor-logo-{id}`, `{id}-logo`, `{id}` (fallback guesses)
-3. A brand-colored circle with the distro's initial letter
-
-To add an icon for a distro, put a PNG named `{distro_id}.png` (200×200px) into `macabout/data/icons/`. 
+2. A brand-colored circle with the distro's initial letter
 
 ## Graphics card lookup table
 
-Graphics card names are resolved via `macabout/data/gpu_lookup.json`, keyed by PCI vendor:device ID (eg `"8086:0a26"`).
+Graphics card names are resolved via `data/gpu_lookup.json` (built into the binary), keyed by PCI vendor:device ID (eg `"8086:0a26"`).

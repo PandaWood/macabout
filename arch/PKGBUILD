@@ -4,42 +4,47 @@ pkgname=macabout
 pkgver=1.0.10
 pkgrel=1
 pkgdesc='About This Computer dialog, Apple-style'
-arch=('any')
+arch=('x86_64' 'aarch64')
 url='https://github.com/PandaWood/macabout'
 license=('MIT')
-depends=('python' 'tk' 'pciutils' 'dmidecode')
-optdepends=(
-  'python-pillow: higher-quality distro icon scaling'
-  'librsvg: SVG distro icon rendering'
-)
-backup=('etc/sudoers.d/macabout')
+# The window libraries are loaded at run time (dlopen), so they are listed here rather than
+# found by makepkg.
+depends=('glibc' 'gcc-libs' 'libglvnd' 'wayland' 'libx11' 'libxcb' 'libxcursor' 'libxi'
+         'libxrender' 'libxkbcommon' 'libxkbcommon-x11' 'fontconfig' 'pciutils')
+makedepends=('cargo')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
 # Replaced with the real checksum by .github/workflows/release.yml before the
 # PKGBUILD is pushed to the AUR. Kept as SKIP in-repo so that `makepkg -si`
 # works from a fresh clone without the tag having been published yet.
 sha256sums=('SKIP')
 
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  # Keep build paths out of the binary (panic locations).
+  export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$srcdir=/build"
+  cargo build --frozen --release
+}
+
+check() {
+  cd "$srcdir/$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$srcdir=/build"
+  cargo test --frozen --release
+}
+
 package() {
   cd "$srcdir/$pkgname-$pkgver"
 
-  # The package tree deliberately lives outside the versioned site-packages
-  # directory (/usr/lib/python3.X/site-packages) so that a Python minor-version
-  # bump doesn't orphan the install and force a rebuild. The /usr/bin launcher
-  # sets PYTHONPATH to match. Data files still resolve, because both lookups
-  # (formatters.py, ui.py) are relative to Path(__file__).parent.
-  install -d "$pkgdir/usr/lib/macabout"
-  cp -r macabout "$pkgdir/usr/lib/macabout/"
-  find "$pkgdir/usr/lib/macabout" -name __pycache__ -type d -exec rm -rf {} +
-  python -m compileall -q --invalidation-mode=unchecked-hash \
-    -s "$pkgdir" -p / "$pkgdir/usr/lib/macabout/macabout"
-
-  install -Dm755 arch/macabout.sh "$pkgdir/usr/bin/macabout"
+  install -Dm755 target/release/macabout "$pkgdir/usr/bin/macabout"
   install -Dm644 debian/usr/share/applications/macabout.desktop \
     "$pkgdir/usr/share/applications/macabout.desktop"
-  # Create the parent explicitly at 750 to match the mode the `filesystem`
-  # package owns it with; `install -D` would default it to 755 and pacman
-  # warns about the mismatch on every install.
-  install -dm750 "$pkgdir/etc/sudoers.d"
-  install -m440 arch/sudoers "$pkgdir/etc/sudoers.d/macabout"
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

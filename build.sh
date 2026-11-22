@@ -1,27 +1,30 @@
 #!/bin/bash
+# Builds the macabout .deb for this machine's architecture (amd64 or arm64).
+# The binary links against the glibc of the build machine: release packages are built on
+# the oldest supported Ubuntu (see .github/workflows/release.yml).
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-VERSION="$(python3 -c "import sys; sys.path.insert(0, '.'); from macabout import __version__; print(__version__)")"
-PKG="macabout_${VERSION}_all"
+VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)"
+case "$(uname -m)" in
+  x86_64) ARCH=amd64 ;;
+  aarch64 | arm64) ARCH=arm64 ;;
+  *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
+esac
+PKG="macabout_${VERSION}_${ARCH}"
 BUILD="build/${PKG}"
 
-rm -rf build
-mkdir -p "${BUILD}/DEBIAN"
-mkdir -p "${BUILD}/usr/bin"
-mkdir -p "${BUILD}/usr/share/applications"
-mkdir -p "${BUILD}/usr/lib/python3/dist-packages"
+cargo build --release --locked
 
-cp debian/DEBIAN/control "${BUILD}/DEBIAN/control"
-cp debian/usr/bin/macabout "${BUILD}/usr/bin/macabout"
-chmod 755 "${BUILD}/usr/bin/macabout"
-cp debian/usr/share/applications/macabout.desktop "${BUILD}/usr/share/applications/macabout.desktop"
-cp -r macabout "${BUILD}/usr/lib/python3/dist-packages/"
-mkdir -p "${BUILD}/etc/sudoers.d"
-cp debian/etc/sudoers.d/macabout "${BUILD}/etc/sudoers.d/macabout"
-cp debian/DEBIAN/postinst "${BUILD}/DEBIAN/postinst"
-chmod 755 "${BUILD}/DEBIAN/postinst"
+rm -rf build
+mkdir -p "${BUILD}/DEBIAN" "${BUILD}/usr/bin" "${BUILD}/usr/share/applications" \
+  "${BUILD}/usr/share/doc/macabout"
+
+sed "s/^Architecture: .*/Architecture: ${ARCH}/" debian/DEBIAN/control > "${BUILD}/DEBIAN/control"
+install -m755 target/release/macabout "${BUILD}/usr/bin/macabout"
+install -m644 debian/usr/share/applications/macabout.desktop "${BUILD}/usr/share/applications/"
+install -m644 LICENSE "${BUILD}/usr/share/doc/macabout/copyright"
 
 dpkg-deb --build --root-owner-group "${BUILD}"
 echo ""
